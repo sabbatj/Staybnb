@@ -1,0 +1,19 @@
+@model List<Staybnb.Web.Models.ActivityLog>
+@{ ViewData["Title"] = "Activity Logs"; }
+
+<h1>System Activity Logs</h1>
+
+<table class="table table-sm">
+    <thead><tr><th>User</th><th>Action</th><th>Type</th><th>When</th></tr></thead>
+    <tbody>
+    @foreach (var log in Model)
+    {
+        <tr>
+            <td>@(log.User?.Email ?? log.UserId)</td>
+            <td>@log.Action</td>
+            <td>@log.ActivityType</td>
+            <td>@log.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+        </tr>
+    }
+    </tbody>
+</table>

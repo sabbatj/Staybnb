@@ -1,0 +1,37 @@
+@model List<Staybnb.Web.Models.HostProperty>
+@{ ViewData["Title"] = "My Properties"; }
+
+<h1>My Properties</h1>
+<a asp-action="AddProperty" class="btn btn-primary mb-3">+ Add New Property</a>
+
+@foreach (var p in Model)
+{
+    <div class="card mb-3 p-3">
+        <div class="row">
+            <div class="col-md-2">
+                @{ var img = p.Images.FirstOrDefault()?.ImageUrl; }
+                @if (img != null) { <img src="@img" class="img-fluid rounded" /> }
+            </div>
+            <div class="col-md-6">
+                <h5>@p.Title</h5>
+                <p class="text-muted mb-0">@p.Address, @p.City</p>
+                <p class="mb-0">R@p.PricePerNight/night</p>
+                <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">@(p.IsActive ? "Active" : "Inactive")</span>
+            </div>
+            <div class="col-md-4 text-end">
+                <a asp-action="EditProperty" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a asp-action="CheckInProcess" asp-route-propertyId="@p.Id" class="btn btn-sm btn-outline-secondary">Check-in Setup</a>
+                <form asp-action="ToggleActive" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@p.Id" />
+                    <button type="submit" class="btn btn-sm @(p.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                        @(p.IsActive ? "Deactivate" : "Activate")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+@if (!Model.Any())
+{
+    <p class="text-muted">You have no properties yet.</p>
+}

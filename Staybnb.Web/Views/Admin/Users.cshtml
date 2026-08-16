@@ -1,0 +1,25 @@
+@model List<Staybnb.Web.Models.ApplicationUser>
+@{ ViewData["Title"] = "Manage Users"; }
+
+<h1>Guests (Promote to Admin)</h1>
+<p class="text-muted">Only SuperAdmin can promote a Guest to Admin.</p>
+
+<table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Joined</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var user in Model)
+    {
+        <tr>
+            <td>@user.FirstName @user.LastName</td>
+            <td>@user.Email</td>
+            <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+            <td>
+                <form asp-action="PromoteToAdmin" method="post">
+                    <input type="hidden" name="id" value="@user.Id" />
+                    <button type="submit" class="btn btn-sm btn-primary">Promote to Admin</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

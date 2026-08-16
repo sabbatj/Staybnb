@@ -1,0 +1,23 @@
+@model List<Staybnb.Web.Models.Message>
+@{ ViewData["Title"] = "Conversation"; }
+@{ var partner = ViewBag.Partner as Staybnb.Web.Models.ApplicationUser; }
+
+<h1>Conversation with @partner?.FirstName @partner?.LastName</h1>
+
+<div class="border rounded p-3 mb-3" style="max-height:400px;overflow-y:auto;">
+@foreach (var m in Model)
+{
+    <div class="mb-2">
+        <strong>@(m.SenderId == ViewBag.PartnerId ? partner?.FirstName : "You"):</strong> @m.Content
+        <div class="text-muted small">@m.Timestamp.ToString("yyyy-MM-dd HH:mm")</div>
+    </div>
+}
+</div>
+
+<form asp-action="Send" method="post">
+    <input type="hidden" name="ReceiverId" value="@ViewBag.PartnerId" />
+    <div class="input-group">
+        <textarea name="Content" class="form-control" rows="2" placeholder="Type a message..."></textarea>
+        <button type="submit" class="btn btn-primary">Send</button>
+    </div>
+</form>

@@ -1,0 +1,33 @@
+@model List<Staybnb.Web.Models.GuestCheckIn>
+@{ ViewData["Title"] = "Guest Check-Ins"; }
+
+<h1>Guest Check-Ins</h1>
+
+@foreach (var c in Model)
+{
+    <div class="card mb-3 p-3">
+        <p><strong>Property:</strong> @c.Booking?.Property?.Title</p>
+        <p><strong>Guest:</strong> @c.Booking?.Guest?.FirstName @c.Booking?.Guest?.LastName</p>
+        <p><strong>Status:</strong> <span class="badge bg-info text-dark">@c.Status</span></p>
+        <p><strong>Documents:</strong></p>
+        <ul>
+        @foreach (var doc in c.Documents)
+        {
+            <li>
+                @doc.DocumentType — <span class="badge @(doc.Status == Staybnb.Web.Models.DocumentStatus.Verified ? "bg-success" : "bg-warning text-dark")">@doc.Status</span>
+                @if (doc.Status != Staybnb.Web.Models.DocumentStatus.Verified)
+                {
+                    <form asp-action="VerifyDocument" method="post" class="d-inline ms-2">
+                        <input type="hidden" name="documentId" value="@doc.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-success">Verify</button>
+                    </form>
+                }
+            </li>
+        }
+        </ul>
+    </div>
+}
+@if (!Model.Any())
+{
+    <p class="text-muted">No guest check-ins yet.</p>
+}

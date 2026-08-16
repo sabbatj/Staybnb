@@ -1,0 +1,37 @@
+@model List<Staybnb.Web.Models.Booking>
+@{ ViewData["Title"] = "My Bookings"; }
+
+<h1>My Bookings</h1>
+
+@foreach (var b in Model)
+{
+    <div class="card mb-3 p-3">
+        <div class="row">
+            <div class="col-md-8">
+                <h5>@b.Property?.Title</h5>
+                <p class="text-muted mb-1">@b.CheckInDate.ToString("yyyy-MM-dd") to @b.CheckOutDate.ToString("yyyy-MM-dd") — @b.NumberOfGuests guests</p>
+                <p class="mb-1">Total: R@b.TotalPrice</p>
+                @{
+                    var badgeClass = b.Status switch
+                    {
+                        Staybnb.Web.Models.BookingStatus.Approved => "bg-success",
+                        Staybnb.Web.Models.BookingStatus.Rejected => "bg-danger",
+                        Staybnb.Web.Models.BookingStatus.CheckedIn => "bg-info text-dark",
+                        _ => "bg-warning text-dark"
+                    };
+                }
+                <span class="badge @badgeClass">@b.Status</span>
+            </div>
+            <div class="col-md-4 text-end">
+                @if (b.Status == Staybnb.Web.Models.BookingStatus.Approved || b.Status == Staybnb.Web.Models.BookingStatus.CheckedIn)
+                {
+                    <a asp-action="CheckIn" asp-route-bookingId="@b.Id" class="btn btn-sm btn-primary">Check-in</a>
+                }
+            </div>
+        </div>
+    </div>
+}
+@if (!Model.Any())
+{
+    <p class="text-muted">You have no bookings yet.</p>
+}

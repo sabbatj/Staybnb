@@ -1,0 +1,69 @@
+@model Staybnb.Web.Models.ViewModels.AddPropertyViewModel
+@{ ViewData["Title"] = "Add Property"; }
+
+<h1>Add a New Property</h1>
+
+<form asp-action="AddProperty" method="post" enctype="multipart/form-data" class="row g-3">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="col-md-8">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="PricePerNight" class="form-label">Price per night (R)</label>
+        <input asp-for="PricePerNight" class="form-control" />
+    </div>
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Address" class="form-label"></label>
+        <input asp-for="Address" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="City" class="form-label"></label>
+        <input asp-for="City" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="PropertyType" class="form-label"></label>
+        <input asp-for="PropertyType" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="MaxGuests" class="form-label"></label>
+        <input asp-for="MaxGuests" class="form-control" type="number" min="1" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Bedrooms" class="form-label"></label>
+        <input asp-for="Bedrooms" class="form-control" type="number" min="0" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Beds" class="form-label"></label>
+        <input asp-for="Beds" class="form-control" type="number" min="0" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Bathrooms" class="form-label"></label>
+        <input asp-for="Bathrooms" class="form-control" type="number" min="0" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="CleaningFee" class="form-label">Cleaning fee (R)</label>
+        <input asp-for="CleaningFee" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ServiceFee" class="form-label">Service fee (R)</label>
+        <input asp-for="ServiceFee" class="form-control" />
+    </div>
+    <div class="col-12">
+        <label class="form-label">Property Images (at least 1)</label>
+        <input type="file" name="Images" class="form-control" multiple accept="image/*" />
+        <span asp-validation-for="Images" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Add Property</button>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,19 @@
+@model Staybnb.Web.Models.ViewModels.CheckInProcessViewModel
+@{ ViewData["Title"] = "Check-in Process"; }
+
+<h1>Configure Check-in Process</h1>
+
+<form asp-action="CheckInProcess" method="post" class="row g-3">
+    <input type="hidden" asp-for="PropertyId" />
+    <div class="col-md-6">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+    </div>
+    <div class="col-12">
+        <label asp-for="StepsText" class="form-label">Steps (one per line)</label>
+        <textarea asp-for="StepsText" class="form-control" rows="6" placeholder="Bring your ID or Passport&#10;Arrive after 2 PM&#10;Contact host on arrival"></textarea>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>

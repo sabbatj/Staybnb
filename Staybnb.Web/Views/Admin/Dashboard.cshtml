@@ -1,0 +1,24 @@
+@{ ViewData["Title"] = "Admin Dashboard"; }
+
+<h1>Admin Dashboard</h1>
+
+<div class="row g-3 mt-2">
+    <div class="col-md-3">
+        <div class="card p-3"><h6>Total Users</h6><h3>@ViewBag.TotalUsers</h3></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3"><h6>Pending Applications</h6><h3>@ViewBag.PendingApps</h3></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3"><h6>Active Properties</h6><h3>@ViewBag.ActiveProperties</h3></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3"><h6>Approved Hosts</h6><h3>@ViewBag.ApprovedHosts</h3></div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="Applications" class="btn btn-primary">Review Applications</a>
+    <a asp-action="Users" class="btn btn-outline-secondary">Manage Users</a>
+    <a asp-action="ActivityLogs" class="btn btn-outline-secondary">Activity Logs</a>
+</div>

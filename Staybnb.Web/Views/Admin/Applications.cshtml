@@ -1,0 +1,48 @@
+@model List<Staybnb.Web.Models.HostApplication>
+@{ ViewData["Title"] = "Host Applications"; }
+
+<h1>Host Applications</h1>
+
+<table class="table">
+    <thead>
+        <tr><th>Applicant</th><th>Property</th><th>Applied</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+    @foreach (var app in Model)
+    {
+        <tr>
+            <td>@app.Applicant?.FirstName @app.Applicant?.LastName<br /><small class="text-muted">@app.Applicant?.Email</small></td>
+            <td>
+                @app.Property?.Title<br />
+                <small class="text-muted">@app.Property?.Address — R@app.Property?.PricePerNight/night</small><br />
+                <small>@(app.Property?.Images.Count ?? 0) image(s)</small>
+            </td>
+            <td>@app.AppliedAt.ToString("yyyy-MM-dd")</td>
+            <td>
+                @{
+                    var badgeClass = app.Status switch
+                    {
+                        Staybnb.Web.Models.ApplicationStatus.Approved => "bg-success",
+                        Staybnb.Web.Models.ApplicationStatus.Rejected => "bg-danger",
+                        _ => "bg-warning text-dark"
+                    };
+                }
+                <span class="badge @badgeClass">@app.Status</span>
+            </td>
+            <td>
+                @if (app.Status == Staybnb.Web.Models.ApplicationStatus.Pending)
+                {
+                    <form asp-action="ApproveApplication" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                    </form>
+                    <form asp-action="RejectApplication" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                    </form>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

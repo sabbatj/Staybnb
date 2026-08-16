@@ -1,0 +1,123 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Staybnb.Web.Constants;
+using Staybnb.Web.Data;
+using Staybnb.Web.Models;
+using Staybnb.Web.Models.ViewModels;
+using Staybnb.Web.Services;
+
+namespace Staybnb.Web.Controllers;
+
+[Authorize]
+public class HostingController : Controller
+{
+    private readonly ApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IActivityLogService _activityLog;
+    private readonly IWebHostEnvironment _env;
+
+    public HostingController(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        IActivityLogService activityLog,
+        IWebHostEnvironment env)
+    {
+        _context = context;
+        _userManager = userManager;
+        _activityLog = activityLog;
+        _env = env;
+    }
+
+    [HttpGet]
+    [Authorize(Roles = Roles.Guest)]
+    public IActionResult BecomeHost() => View(new BecomeHostViewModel());
+
+    [HttpPost]
+    [Authorize(Roles = Roles.Guest)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BecomeHost(BecomeHostViewModel model)
+    {
+        if (model.Images == null || model.Images.Count == 0 || model.Images.All(f => f.Length == 0))
+        {
+            ModelState.AddModelError(nameof(model.Images), "At least one property image is required.");
+        }
+
+        if (!ModelState.IsValid) return View(model);
+
+        var userId = _userManager.GetUserId(User)!;
+
+        var property = new HostProperty
+        {
+            Title = model.Title,
+            Description = model.Description,
+            PricePerNight = model.PricePerNight,
+            HostId = userId,
+            Address = model.Address,
+            City = model.City,
+            PropertyType = model.PropertyType,
+            MaxGuests = model.MaxGuests,
+            Bedrooms = model.Bedrooms,
+            Beds = model.Beds,
+            Bathrooms = model.Bathrooms,
+            CleaningFee = model.CleaningFee,
+            ServiceFee = model.ServiceFee,
+            IsActive = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.HostProperties.Add(property);
+        await _context.SaveChangesAsync();
+
+        var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "properties");
+        Directory.CreateDirectory(uploadsFolder);
+
+        var imagesToSave = model.Images?.Where(f => f.Length > 0) ?? Enumerable.Empty<IFormFile>();
+        foreach (var file in imagesToSave)
+        {
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            _context.PropertyImages.Add(new PropertyImage
+            {
+                PropertyId = property.Id,
+                ImageUrl = $"/uploads/properties/{fileName}"
+            });
+        }
+
+        var application = new HostApplication
+        {
+            ApplicationUserId = userId,
+            PropertyId = property.Id,
+            Status = ApplicationStatus.Pending,
+            AppliedAt = DateTime.UtcNow
+        };
+        _context.HostApplications.Add(application);
+
+        await _context.SaveChangesAsync();
+
+        await _activityLog.LogAsync(userId, $"Submitted host application for property '{property.Title}'", ActivityType.HostApplication);
+
+        return RedirectToAction(nameof(MyApplications));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> MyApplications()
+    {
+        var userId = _userManager.GetUserId(User)!;
+
+        var applications = await _context.HostApplications
+            .Include(a => a.Property)
+            .Where(a => a.ApplicationUserId == userId)
+            .OrderByDescending(a => a.AppliedAt)
+            .ToListAsync();
+
+        return View(applications);
+    }
+}

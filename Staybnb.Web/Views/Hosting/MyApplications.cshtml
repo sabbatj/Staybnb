@@ -1,0 +1,37 @@
+@model List<Staybnb.Web.Models.HostApplication>
+@{ ViewData["Title"] = "Host Application Status"; }
+
+<h1>Your Host Applications</h1>
+
+@if (!Model.Any())
+{
+    <p>You haven't submitted any host applications yet. <a asp-action="BecomeHost">Become a Host</a></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr><th>Property</th><th>Applied</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var app in Model)
+        {
+            <tr>
+                <td>@app.Property?.Title</td>
+                <td>@app.AppliedAt.ToString("yyyy-MM-dd")</td>
+                <td>
+                    @{
+                        var badgeClass = app.Status switch
+                        {
+                            Staybnb.Web.Models.ApplicationStatus.Approved => "bg-success",
+                            Staybnb.Web.Models.ApplicationStatus.Rejected => "bg-danger",
+                            _ => "bg-warning text-dark"
+                        };
+                    }
+                    <span class="badge @badgeClass">@app.Status</span>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

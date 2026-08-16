@@ -1,0 +1,46 @@
+@model List<Staybnb.Web.Models.Booking>
+@{ ViewData["Title"] = "Booking Requests"; }
+
+<h1>Booking Requests</h1>
+
+<table class="table">
+    <thead><tr><th>Property</th><th>Guest</th><th>Dates</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    @foreach (var b in Model)
+    {
+        <tr>
+            <td>@b.Property?.Title</td>
+            <td>@b.Guest?.FirstName @b.Guest?.LastName</td>
+            <td>@b.CheckInDate.ToString("yyyy-MM-dd") to @b.CheckOutDate.ToString("yyyy-MM-dd")</td>
+            <td>R@b.TotalPrice</td>
+            <td>
+                @{
+                    var badgeClass = b.Status switch
+                    {
+                        Staybnb.Web.Models.BookingStatus.Approved => "bg-success",
+                        Staybnb.Web.Models.BookingStatus.Rejected => "bg-danger",
+                        Staybnb.Web.Models.BookingStatus.CheckedIn => "bg-info text-dark",
+                        _ => "bg-warning text-dark"
+                    };
+                }
+                <span class="badge @badgeClass">@b.Status</span>
+            </td>
+            <td>
+                @if (b.Status == Staybnb.Web.Models.BookingStatus.Pending)
+                {
+                    <form asp-action="UpdateBookingStatus" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@b.Id" />
+                        <input type="hidden" name="status" value="Approved" />
+                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                    </form>
+                    <form asp-action="UpdateBookingStatus" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@b.Id" />
+                        <input type="hidden" name="status" value="Rejected" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                    </form>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

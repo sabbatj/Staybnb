@@ -1,0 +1,24 @@
+@model List<Staybnb.Web.Models.ApplicationUser>
+@{ ViewData["Title"] = "Inbox"; }
+
+<h1>Inbox</h1>
+
+@{ var unreadCounts = ViewBag.UnreadCounts as Dictionary<string, int>; }
+
+<ul class="list-group">
+@foreach (var partner in Model)
+{
+    var count = unreadCounts != null && unreadCounts.ContainsKey(partner.Id) ? unreadCounts[partner.Id] : 0;
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <a asp-action="Conversation" asp-route-userId="@partner.Id">@partner.FirstName @partner.LastName (@partner.Email)</a>
+        @if (count > 0)
+        {
+            <span class="badge bg-danger rounded-pill">@count</span>
+        }
+    </li>
+}
+</ul>
+@if (!Model.Any())
+{
+    <p class="text-muted mt-3">No conversations yet.</p>
+}
