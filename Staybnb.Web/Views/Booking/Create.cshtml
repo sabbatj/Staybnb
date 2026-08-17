@@ -1,29 +1,45 @@
 @model Staybnb.Web.Models.ViewModels.BookingCreateViewModel
-@{ ViewData["Title"] = "Book Property"; }
+@{
+    ViewData["Title"] = "Book Property";
+    var property = (Staybnb.Web.Models.HostProperty)ViewBag.Property;
+    var img = property.Images.FirstOrDefault()?.ImageUrl;
+}
 
-<h1>Book: @(((Staybnb.Web.Models.HostProperty)ViewBag.Property).Title)</h1>
-<p class="text-muted">R@(((Staybnb.Web.Models.HostProperty)ViewBag.Property).PricePerNight)/night + cleaning + service fee</p>
+<div class="row g-4">
+    <div class="col-md-5">
+        @if (img != null)
+        {
+            <img src="@img" style="width:100%;border-radius:12px;object-fit:cover;max-height:280px;" />
+        }
+        <h5 class="mt-3">@property.Title</h5>
+        <p class="text-muted mb-1">@property.Address, @property.City</p>
+        <p><span class="price-tag">R@(property.PricePerNight.ToString("N0")) <small>/ night</small></span></p>
+        <p class="text-muted small">+ R@property.CleaningFee cleaning fee, R@property.ServiceFee service fee</p>
+    </div>
+    <div class="col-md-7">
+        <h1>Confirm your booking</h1>
+        <form asp-action="Create" method="post" class="row g-3 mt-1">
+            <input type="hidden" asp-for="PropertyId" />
+            <div asp-validation-summary="All" class="text-danger"></div>
 
-<form asp-action="Create" method="post" class="row g-3">
-    <input type="hidden" asp-for="PropertyId" />
-    <div asp-validation-summary="All" class="text-danger"></div>
-
-    <div class="col-md-4">
-        <label asp-for="CheckInDate" class="form-label"></label>
-        <input asp-for="CheckInDate" class="form-control" type="date" />
+            <div class="col-md-6">
+                <label asp-for="CheckInDate" class="form-label"></label>
+                <input asp-for="CheckInDate" class="form-control" type="date" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="CheckOutDate" class="form-label"></label>
+                <input asp-for="CheckOutDate" class="form-control" type="date" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="NumberOfGuests" class="form-label"></label>
+                <input asp-for="NumberOfGuests" class="form-control" type="number" min="1" />
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Confirm Booking</button>
+            </div>
+        </form>
     </div>
-    <div class="col-md-4">
-        <label asp-for="CheckOutDate" class="form-label"></label>
-        <input asp-for="CheckOutDate" class="form-control" type="date" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="NumberOfGuests" class="form-label"></label>
-        <input asp-for="NumberOfGuests" class="form-control" type="number" min="1" />
-    </div>
-    <div class="col-12">
-        <button type="submit" class="btn btn-primary">Confirm Booking</button>
-    </div>
-</form>
+</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

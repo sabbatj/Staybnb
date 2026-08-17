@@ -3,35 +3,57 @@
 
 <h1>My Bookings</h1>
 
-@foreach (var b in Model)
+@if (Model.Any())
 {
-    <div class="card mb-3 p-3">
-        <div class="row">
-            <div class="col-md-8">
-                <h5>@b.Property?.Title</h5>
-                <p class="text-muted mb-1">@b.CheckInDate.ToString("yyyy-MM-dd") to @b.CheckOutDate.ToString("yyyy-MM-dd") — @b.NumberOfGuests guests</p>
-                <p class="mb-1">Total: R@b.TotalPrice</p>
-                @{
-                    var badgeClass = b.Status switch
+    @foreach (var b in Model)
+    {
+        var img = b.Property?.Images.FirstOrDefault()?.ImageUrl;
+        <div class="card mb-3">
+            <div class="row g-0 align-items-center">
+                <div class="col-md-3">
+                    @if (img != null)
                     {
-                        Staybnb.Web.Models.BookingStatus.Approved => "bg-success",
-                        Staybnb.Web.Models.BookingStatus.Rejected => "bg-danger",
-                        Staybnb.Web.Models.BookingStatus.CheckedIn => "bg-info text-dark",
-                        _ => "bg-warning text-dark"
-                    };
-                }
-                <span class="badge @badgeClass">@b.Status</span>
-            </div>
-            <div class="col-md-4 text-end">
-                @if (b.Status == Staybnb.Web.Models.BookingStatus.Approved || b.Status == Staybnb.Web.Models.BookingStatus.CheckedIn)
-                {
-                    <a asp-action="CheckIn" asp-route-bookingId="@b.Id" class="btn btn-sm btn-primary">Check-in</a>
-                }
+                        <img src="@img" style="width:100%;height:130px;object-fit:cover;border-radius:10px 0 0 10px;" />
+                    }
+                    else
+                    {
+                        <div class="property-card-noimg" style="height:130px;border-radius:10px 0 0 10px;">No photo</div>
+                    }
+                </div>
+                <div class="col-md-6 p-3">
+                    <h5 class="mb-1">@b.Property?.Title</h5>
+                    <p class="text-muted mb-1">@b.CheckInDate.ToString("yyyy-MM-dd") to @b.CheckOutDate.ToString("yyyy-MM-dd") — @b.NumberOfGuests guests</p>
+                    <p class="mb-1"><span class="price-tag">R@(b.TotalPrice.ToString("N0")) <small>total</small></span></p>
+                    @{
+                        var badgeClass = b.Status switch
+                        {
+                            Staybnb.Web.Models.BookingStatus.Approved => "bg-success",
+                            Staybnb.Web.Models.BookingStatus.Rejected => "bg-danger",
+                            Staybnb.Web.Models.BookingStatus.CheckedIn => "bg-info text-dark",
+                            _ => "bg-warning text-dark"
+                        };
+                    }
+                    <span class="badge @badgeClass">@b.Status</span>
+                </div>
+                <div class="col-md-3 text-end p-3">
+                    @if (b.Status == Staybnb.Web.Models.BookingStatus.Approved)
+                    {
+                        <a asp-action="CheckIn" asp-route-bookingId="@b.Id" class="btn btn-sm btn-primary">Check-in</a>
+                    }
+                    @if (b.Status == Staybnb.Web.Models.BookingStatus.CheckedIn)
+                    {
+                        <a asp-action="LeaveReview" asp-route-bookingId="@b.Id" class="btn btn-sm btn-outline-primary">Leave a review</a>
+                    }
+                </div>
             </div>
         </div>
-    </div>
+    }
 }
-@if (!Model.Any())
+else
 {
-    <p class="text-muted">You have no bookings yet.</p>
+    <div class="empty-state">
+        <h5>No bookings yet</h5>
+        <p class="mb-0">Once you book a stay, it'll show up here.</p>
+        <a asp-controller="Properties" asp-action="Index" class="btn btn-primary mt-2">Browse stays</a>
+    </div>
 }

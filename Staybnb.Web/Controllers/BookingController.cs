@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -30,12 +31,14 @@ public class BookingController : Controller
         _env = env;
     }
 
-    private string CurrentUserId => _userManager.GetUserId(User)!;
+    private string? CurrentUserId => _userManager.GetUserId(User);
 
     [HttpGet]
     public async Task<IActionResult> Create(int propertyId)
     {
-        var property = await _context.HostProperties.FirstOrDefaultAsync(p => p.Id == propertyId && p.IsActive);
+        var property = await _context.HostProperties
+            .Include(p => p.Images)
+            .FirstOrDefaultAsync(p => p.Id == propertyId && p.IsActive);
         if (property == null) return NotFound();
 
         ViewBag.Property = property;
@@ -46,6 +49,14 @@ public class BookingController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(BookingCreateViewModel model)
     {
+        var currentUser = await _userManager.GetUserAsync(User);
+
+        if (currentUser == null)
+        {
+            await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            return Challenge();
+        }
+
         var property = await _context.HostProperties.FirstOrDefaultAsync(p => p.Id == model.PropertyId && p.IsActive);
         if (property == null) return NotFound();
 
@@ -67,12 +78,12 @@ public class BookingController : Controller
             return View(model);
         }
 
-        var totalPrice = (property.PricePerNight * nights) + property.CleaningFee + property.ServiceFee;
+        var totalPrice = PricingCalculator.CalculateTotalPrice(property.PricePerNight, nights, property.CleaningFee, property.ServiceFee);
 
         var booking = new Booking
         {
             PropertyId = property.Id,
-            GuestId = CurrentUserId,
+            GuestId = currentUser.Id,
             CheckInDate = model.CheckInDate,
             CheckOutDate = model.CheckOutDate,
             NumberOfGuests = model.NumberOfGuests,
@@ -93,7 +104,7 @@ public class BookingController : Controller
         });
         await _context.SaveChangesAsync();
 
-        await _activityLog.LogAsync(CurrentUserId, $"Requested booking for '{property.Title}'", ActivityType.BookingStatusUpdate);
+        await _activityLog.LogAsync(currentUser.Id, $"Requested booking for '{property.Title}'", ActivityType.BookingStatusUpdate);
 
         return RedirectToAction(nameof(MyBookings));
     }
@@ -190,6 +201,69 @@ public class BookingController : Controller
         await _context.SaveChangesAsync();
         await _activityLog.LogAsync(CurrentUserId, $"Completed check-in for booking #{booking.Id}", ActivityType.BookingStatusUpdate);
 
+        return RedirectToAction(nameof(MyBookings));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> LeaveReview(int bookingId)
+    {
+        var booking = await _context.Bookings
+            .Include(b => b.Property)
+            .FirstOrDefaultAsync(b => b.Id == bookingId && b.GuestId == CurrentUserId);
+
+        if (booking == null) return NotFound();
+
+        if (booking.Status != BookingStatus.CheckedIn && booking.Status != BookingStatus.Completed)
+        {
+            TempData["Error"] = "You can only leave a review after checking in.";
+            return RedirectToAction(nameof(MyBookings));
+        }
+
+        var alreadyReviewed = await _context.Reviews
+            .AnyAsync(r => r.PropertyId == booking.PropertyId && r.ReviewerId == CurrentUserId);
+
+        if (alreadyReviewed)
+        {
+            TempData["Error"] = "You've already reviewed this property.";
+            return RedirectToAction(nameof(MyBookings));
+        }
+
+        ViewBag.Property = booking.Property;
+        return View(new ReviewCreateViewModel { PropertyId = booking.PropertyId, BookingId = booking.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> LeaveReview(ReviewCreateViewModel model)
+    {
+        var booking = await _context.Bookings
+            .Include(b => b.Property)
+            .FirstOrDefaultAsync(b => b.Id == model.BookingId && b.GuestId == CurrentUserId);
+
+        if (booking == null) return NotFound();
+
+        var alreadyReviewed = await _context.Reviews
+            .AnyAsync(r => r.PropertyId == model.PropertyId && r.ReviewerId == CurrentUserId);
+
+        if (alreadyReviewed)
+        {
+            TempData["Error"] = "You've already reviewed this property.";
+            return RedirectToAction(nameof(MyBookings));
+        }
+
+        _context.Reviews.Add(new Review
+        {
+            PropertyId = model.PropertyId,
+            ReviewerId = CurrentUserId,
+            Rating = model.Rating,
+            Comment = model.Comment,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+        await _activityLog.LogAsync(CurrentUserId, $"Left a review for '{booking.Property?.Title}'", ActivityType.Other);
+
+        TempData["Success"] = "Thanks for your review!";
         return RedirectToAction(nameof(MyBookings));
     }
 }
