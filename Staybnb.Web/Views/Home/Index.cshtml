@@ -1,8 +1,41 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+@{ ViewData["Title"] = "Home"; }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="hero">
+    <div class="container-fluid">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <div class="hero-eyebrow">Staybnb — stays across South Africa</div>
+                <h1>Find a place to stay, or open your door to travelers.</h1>
+                <p>Browse verified properties from Cape Town to Mpumalanga, or apply to become a host and start earning from your space.</p>
+                <div class="mt-4 d-flex gap-2">
+                    <a asp-controller="Properties" asp-action="Index" class="btn btn-hero-primary">Browse stays</a>
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-hero-ghost">Create an account</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="section-eyebrow">How it works — three steps</div>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="step-col">
+                <h5>01 · Discover</h5>
+                <p class="text-muted">Filter by city or property type and browse an Airbnb-style gallery of active listings.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="step-col">
+                <h5>02 · Book</h5>
+                <p class="text-muted">Select your dates, see the full price breakdown, and send a booking request in seconds.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="step-col">
+                <h5>03 · Check in</h5>
+                <p class="text-muted">Upload your ID or passport ahead of arrival so your host can verify you before check-in.</p>
+            </div>
+        </div>
+    </div>
 </div>

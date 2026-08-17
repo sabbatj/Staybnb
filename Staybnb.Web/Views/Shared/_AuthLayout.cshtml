@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Staybnb</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="auth-body">
+    <div class="auth-shell">
+        <div class="auth-panel-left">
+            @RenderBody()
+        </div>
+        <div class="auth-panel-right" style="background-image: linear-gradient(180deg, rgba(22,33,58,0.55) 0%, rgba(22,33,58,0.88) 65%, var(--ink) 100%), url('@(ViewData["AuthPhoto"] ?? "/images/auth-cabin.jpg")');">
+            <a class="auth-brand" href="/"><span class="brand-mark">S</span>Staybnb</a>
+
+            <div class="auth-visual">
+                <div class="ticket-stack">
+                    <div class="ticket ticket-1">
+                        <div class="ticket-row"><span>DESTINATION</span><span>CAPE TOWN</span></div>
+                        <div class="ticket-row"><span>GUEST</span><span>2 ADULTS</span></div>
+                        <div class="ticket-perf"></div>
+                        <div class="ticket-row ticket-price"><span>PER NIGHT</span><span>R 1,320</span></div>
+                    </div>
+                    <div class="ticket ticket-2">
+                        <div class="ticket-row"><span>DESTINATION</span><span>DRAKENSBERG</span></div>
+                        <div class="ticket-row"><span>GUEST</span><span>4 ADULTS</span></div>
+                        <div class="ticket-perf"></div>
+                        <div class="ticket-row ticket-price"><span>PER NIGHT</span><span>R 3,100</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-quote">
+                <p>&ldquo;Every stay starts with someone opening their door.&rdquo;</p>
+                <span>— The Staybnb host community</span>
+            </div>
+        </div>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
