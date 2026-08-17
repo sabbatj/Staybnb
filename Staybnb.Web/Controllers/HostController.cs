@@ -198,7 +198,7 @@ public class HostController : Controller
     public async Task<IActionResult> BookingRequests()
     {
         var bookings = await _context.Bookings
-            .Include(b => b.Property)
+            .Include(b => b.Property)!.ThenInclude(p => p!.Images)
             .Include(b => b.Guest)
             .Where(b => b.Property!.HostId == CurrentUserId)
             .OrderByDescending(b => b.CreatedAt)

@@ -15,7 +15,7 @@
             <div class="col-md-6">
                 <h5>@p.Title</h5>
                 <p class="text-muted mb-0">@p.Address, @p.City</p>
-                <p class="mb-0">R@p.PricePerNight/night</p>
+                <p class="mb-0">R@(p.PricePerNight.ToString("N0"))/night</p>
                 <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">@(p.IsActive ? "Active" : "Inactive")</span>
             </div>
             <div class="col-md-4 text-end">

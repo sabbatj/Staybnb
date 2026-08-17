@@ -3,46 +3,65 @@
 
 <h1>Host Applications</h1>
 
-<table class="table">
-    <thead>
-        <tr><th>Applicant</th><th>Property</th><th>Applied</th><th>Status</th><th>Actions</th></tr>
-    </thead>
-    <tbody>
+@if (Model.Any())
+{
     @foreach (var app in Model)
     {
-        <tr>
-            <td>@app.Applicant?.FirstName @app.Applicant?.LastName<br /><small class="text-muted">@app.Applicant?.Email</small></td>
-            <td>
-                @app.Property?.Title<br />
-                <small class="text-muted">@app.Property?.Address — R@app.Property?.PricePerNight/night</small><br />
-                <small>@(app.Property?.Images.Count ?? 0) image(s)</small>
-            </td>
-            <td>@app.AppliedAt.ToString("yyyy-MM-dd")</td>
-            <td>
-                @{
-                    var badgeClass = app.Status switch
+        var img = app.Property?.Images.FirstOrDefault()?.ImageUrl;
+        <div class="card mb-3 p-3">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    @if (img != null)
                     {
-                        Staybnb.Web.Models.ApplicationStatus.Approved => "bg-success",
-                        Staybnb.Web.Models.ApplicationStatus.Rejected => "bg-danger",
-                        _ => "bg-warning text-dark"
-                    };
-                }
-                <span class="badge @badgeClass">@app.Status</span>
-            </td>
-            <td>
-                @if (app.Status == Staybnb.Web.Models.ApplicationStatus.Pending)
-                {
-                    <form asp-action="ApproveApplication" method="post" class="d-inline">
-                        <input type="hidden" name="id" value="@app.Id" />
-                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                    </form>
-                    <form asp-action="RejectApplication" method="post" class="d-inline">
-                        <input type="hidden" name="id" value="@app.Id" />
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
-                    </form>
-                }
-            </td>
-        </tr>
+                        <img src="@img" style="width:100%;height:90px;object-fit:cover;border-radius:8px;" />
+                    }
+                    else
+                    {
+                        <div class="property-card-noimg" style="height:90px;border-radius:8px;">No photo</div>
+                    }
+                </div>
+                <div class="col-md-4">
+                    <strong>@app.Applicant?.FirstName @app.Applicant?.LastName</strong>
+                    <div class="text-muted small">@app.Applicant?.Email</div>
+                    <div class="mt-1">@app.Property?.Title</div>
+                    <div class="text-muted small">@app.Property?.Address — R@app.Property?.PricePerNight/night</div>
+                </div>
+                <div class="col-md-2 text-muted small">
+                    Applied @app.AppliedAt.ToString("yyyy-MM-dd")<br />
+                    @(app.Property?.Images.Count ?? 0) image(s)
+                </div>
+                <div class="col-md-2">
+                    @{
+                        var badgeClass = app.Status switch
+                        {
+                            Staybnb.Web.Models.ApplicationStatus.Approved => "bg-success",
+                            Staybnb.Web.Models.ApplicationStatus.Rejected => "bg-danger",
+                            _ => "bg-warning text-dark"
+                        };
+                    }
+                    <span class="badge @badgeClass">@app.Status</span>
+                </div>
+                <div class="col-md-2 text-end">
+                    @if (app.Status == Staybnb.Web.Models.ApplicationStatus.Pending)
+                    {
+                        <form asp-action="ApproveApplication" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@app.Id" />
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form asp-action="RejectApplication" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@app.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
     }
-    </tbody>
-</table>
+}
+else
+{
+    <div class="empty-state">
+        <h5>No applications yet</h5>
+        <p class="mb-0">Host applications will appear here once guests apply.</p>
+    </div>
+}
