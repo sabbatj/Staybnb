@@ -26,6 +26,9 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Register() => View(new RegisterViewModel());
 
+    [HttpGet]
+    public IActionResult AccessDenied() => View();
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
