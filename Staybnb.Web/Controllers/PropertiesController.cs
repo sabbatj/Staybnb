@@ -1,17 +1,20 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Staybnb.Web.Data;
-using Staybnb.Web.Models.ViewModels;
+using Staybnb.Web.Models;
 
 namespace Staybnb.Web.Controllers;
 
 public class PropertiesController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public PropertiesController(ApplicationDbContext context)
+    public PropertiesController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     {
         _context = context;
+        _userManager = userManager;
     }
 
     [HttpGet]
@@ -20,6 +23,7 @@ public class PropertiesController : Controller
         var query = _context.HostProperties
             .Include(p => p.Images)
             .Include(p => p.Host)
+            .Include(p => p.Reviews)
             .Where(p => p.IsActive)
             .AsQueryable();
 
@@ -36,6 +40,19 @@ public class PropertiesController : Controller
         ViewBag.City = city;
         ViewBag.PropertyType = propertyType;
 
+        if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            ViewBag.WishlistIds = await _context.WishlistItems
+                .Where(w => w.UserId == userId)
+                .Select(w => w.PropertyId)
+                .ToListAsync();
+        }
+        else
+        {
+            ViewBag.WishlistIds = new List<int>();
+        }
+
         var properties = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
         return View(properties);
     }
@@ -51,6 +68,17 @@ public class PropertiesController : Controller
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (property == null) return NotFound();
+
+        if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            ViewBag.IsWishlisted = await _context.WishlistItems
+                .AnyAsync(w => w.UserId == userId && w.PropertyId == id);
+        }
+        else
+        {
+            ViewBag.IsWishlisted = false;
+        }
 
         return View(property);
     }

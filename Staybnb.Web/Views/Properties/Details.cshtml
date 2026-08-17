@@ -1,13 +1,39 @@
 @model Staybnb.Web.Models.HostProperty
-@{ ViewData["Title"] = Model.Title; }
+@{
+    ViewData["Title"] = Model.Title;
+    var reviewCount = Model.Reviews.Count;
+    var avgRating = reviewCount > 0 ? Model.Reviews.Average(r => r.Rating) : 0;
+    var isSaved = (bool)ViewBag.IsWishlisted;
+    var isSignedIn = User.Identity != null && User.Identity.IsAuthenticated;
+}
 
-<h1>@Model.Title</h1>
-<p class="text-muted">@Model.Address, @Model.City</p>
+<div class="d-flex justify-content-between align-items-start">
+    <div>
+        <h1>@Model.Title</h1>
+        <p class="text-muted">
+            @Model.Address, @Model.City &nbsp;·&nbsp;
+            <span class="rating-pill">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+                @avgRating.ToString("0.0") <span class="text-muted">(@reviewCount review@(reviewCount == 1 ? "" : "s"))</span>
+            </span>
+        </p>
+    </div>
+    @if (isSignedIn)
+    {
+        <form asp-controller="Wishlist" asp-action="Toggle" method="post">
+            <input type="hidden" name="propertyId" value="@Model.Id" />
+            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+            <button class="btn @(isSaved ? "btn-primary" : "btn-outline-primary")" type="submit">
+                @(isSaved ? "♥ Saved" : "♡ Save")
+            </button>
+        </form>
+    }
+</div>
 
 <div class="row g-2 mb-3">
 @foreach (var img in Model.Images)
 {
-    <div class="col-md-3"><img src="@img.ImageUrl" class="img-fluid rounded" /></div>
+    <div class="col-md-3"><img src="@img.ImageUrl" class="img-fluid rounded" style="height:160px;width:100%;object-fit:cover;" /></div>
 }
 </div>
 
@@ -22,7 +48,7 @@
         </ul>
         <p><strong>Hosted by:</strong> @Model.Host?.FirstName @Model.Host?.LastName</p>
 
-        @if (User.Identity != null && User.Identity.IsAuthenticated && Model.HostId != null)
+        @if (isSignedIn && Model.HostId != null)
         {
             <form asp-controller="Messages" asp-action="Send" method="post" class="mt-3">
                 <input type="hidden" name="ReceiverId" value="@Model.HostId" />
@@ -32,16 +58,32 @@
                 <button type="submit" class="btn btn-outline-secondary btn-sm">Send Message</button>
             </form>
         }
+
+        @if (reviewCount > 0)
+        {
+            <hr class="my-4" />
+            <h5>Reviews</h5>
+            @foreach (var r in Model.Reviews.OrderByDescending(r => r.CreatedAt))
+            {
+                <div class="mb-3">
+                    <div class="rating-pill mb-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+                        @r.Rating.0
+                    </div>
+                    <p class="mb-0 text-muted">@r.Comment</p>
+                </div>
+            }
+        }
     </div>
     <div class="col-md-4">
         <div class="card p-3">
-            <h4>R@Model.PricePerNight <small class="text-muted">/ night</small></h4>
-            <p class="text-muted">+ R@Model.CleaningFee cleaning, R@Model.ServiceFee service</p>
+            <h4>R@(Model.PricePerNight.ToString("N0")) <small class="text-muted">/ night</small></h4>
+            <p class="text-muted">+ R@(Model.CleaningFee.ToString("N0")) cleaning, R@(Model.ServiceFee.ToString("N0")) service</p>
             @if (User.IsInRole(Staybnb.Web.Constants.Roles.Guest))
             {
                 <a asp-controller="Booking" asp-action="Create" asp-route-propertyId="@Model.Id" class="btn btn-primary">Book now</a>
             }
-            else if (User.Identity == null || !User.Identity.IsAuthenticated)
+            else if (!isSignedIn)
             {
                 <a asp-controller="Account" asp-action="Login" class="btn btn-primary">Log in to book</a>
             }
