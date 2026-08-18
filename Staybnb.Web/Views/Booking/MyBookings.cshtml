@@ -45,7 +45,7 @@
                 <div class="col-md-3 text-end p-3">
                     @if (b.Status == Staybnb.Web.Models.BookingStatus.Approved)
                     {
-                        <a asp-action="CheckIn" asp-route-bookingId="@b.Id" class="btn btn-sm btn-primary">Check-in</a>
+                        <a asp-controller="Booking" asp-action="CheckIn" asp-route-bookingId="@b.Id" class="btn btn-primary w-100 mb-2">Check-in</a>
                     }
                     @if (b.Status == Staybnb.Web.Models.BookingStatus.CheckedIn)
                     {

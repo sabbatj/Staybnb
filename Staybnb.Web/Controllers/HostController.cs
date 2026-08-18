@@ -399,6 +399,7 @@ public class HostController : Controller
                 if (checkIn.Booking != null)
                 {
                     checkIn.Booking.Status = BookingStatus.CheckedIn;
+                    checkIn.Booking.CheckedInAt = DateTime.UtcNow;
                 }
             }
         }

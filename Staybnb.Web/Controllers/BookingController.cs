@@ -151,6 +151,20 @@ public class BookingController : Controller
             return RedirectToAction(nameof(MyBookings));
         }
 
+        if (booking.Property != null && booking.Property.CheckInProcess == null)
+        {
+            booking.Property.CheckInProcess = new CheckInProcess
+            {
+                PropertyId = booking.Property.Id,
+                Title = "Guest Check-in",
+                StepsJson = "[\"Complete check-in\",\"Upload ID or Passport\",\"Host verifies document\"]",
+                RequiredDocumentsJson = "[\"ID\",\"Passport\"]",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _context.SaveChangesAsync();
+        }
+
         return View(booking);
     }
 

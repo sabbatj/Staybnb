@@ -22,6 +22,9 @@ public class Booking
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public DateTime? CheckedInAt { get; set; }
+    public DateTime? CheckedOutAt { get; set; }
+
     public Payment? Payment { get; set; }
     public GuestCheckIn? GuestCheckIn { get; set; }
 }

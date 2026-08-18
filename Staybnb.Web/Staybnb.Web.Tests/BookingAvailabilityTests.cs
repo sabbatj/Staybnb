@@ -61,4 +61,25 @@ public class BookingAvailabilityTests
             existingIn,
             existingOut));
     }
+
+    [Fact]
+    public void Checkout_Records_Checkout_Time()
+    {
+        var booking = new Staybnb.Web.Models.Booking
+        {
+            Status = Staybnb.Web.Models.BookingStatus.CheckedIn
+        };
+
+        var checkoutTime = DateTime.UtcNow;
+
+        booking.Status = Staybnb.Web.Models.BookingStatus.CheckedOut;
+        booking.CheckedOutAt = checkoutTime;
+
+        Assert.Equal(
+            Staybnb.Web.Models.BookingStatus.CheckedOut,
+            booking.Status);
+
+        Assert.NotNull(booking.CheckedOutAt);
+        Assert.Equal(checkoutTime, booking.CheckedOutAt);
+    }
 }

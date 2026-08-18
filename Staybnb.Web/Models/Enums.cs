@@ -13,6 +13,7 @@ public enum BookingStatus
     Approved,
     Rejected,
     CheckedIn,
+    CheckedOut,
     Completed,
     Cancelled
 }
