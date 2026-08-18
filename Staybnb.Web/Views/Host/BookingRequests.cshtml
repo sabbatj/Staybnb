@@ -23,7 +23,7 @@
                 </td>
                 <td>@b.Guest?.FirstName @b.Guest?.LastName</td>
                 <td>@b.CheckInDate.ToString("yyyy-MM-dd") to @b.CheckOutDate.ToString("yyyy-MM-dd")</td>
-                <td>R@b.TotalPrice</td>
+                <td><span class="price-tag">R@(b.TotalPrice.ToString("N2"))</span></td>
                 <td>
                     @{
                         var badgeClass = b.Status switch
@@ -36,18 +36,18 @@
                     }
                     <span class="badge @badgeClass">@b.Status</span>
                 </td>
-                <td>
+                <td class="booking-actions">
                     @if (b.Status == Staybnb.Web.Models.BookingStatus.Pending)
                     {
                         <form asp-action="UpdateBookingStatus" method="post" class="d-inline">
                             <input type="hidden" name="id" value="@b.Id" />
                             <input type="hidden" name="status" value="Approved" />
-                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                            <button type="submit" class="btn btn-sm btn-success"><span aria-hidden="true">✓</span> Approve</button>
                         </form>
                         <form asp-action="UpdateBookingStatus" method="post" class="d-inline">
                             <input type="hidden" name="id" value="@b.Id" />
                             <input type="hidden" name="status" value="Rejected" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><span aria-hidden="true">×</span> Reject</button>
                         </form>
                     }
                 </td>

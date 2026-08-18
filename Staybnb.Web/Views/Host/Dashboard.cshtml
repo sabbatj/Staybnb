@@ -1,17 +1,116 @@
 @{ ViewData["Title"] = "Host Dashboard"; }
 
 <h1>Host Dashboard</h1>
+<p class="text-muted mb-4">Here's how your properties are performing.</p>
 
-<div class="row g-3 mt-2">
-    <div class="col-md-3"><div class="card p-3"><h6>Total Properties</h6><h3>@ViewBag.TotalProperties</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><h6>Active Properties</h6><h3>@ViewBag.ActiveProperties</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><h6>Pending Bookings</h6><h3>@ViewBag.PendingBookings</h3></div></div>
-    <div class="col-md-3"><div class="card p-3"><h6>Total Bookings</h6><h3>@ViewBag.TotalBookings</h3></div></div>
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="dashboard-stat">
+            <div class="dashboard-stat-icon">🏠</div>
+            <div class="dashboard-stat-value">@ViewBag.TotalProperties</div>
+            <div class="dashboard-stat-label">Total Properties</div>
+            <div class="dashboard-stat-sub">@ViewBag.ActiveProperties active</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dashboard-stat">
+            <div class="dashboard-stat-icon">📅</div>
+            <div class="dashboard-stat-value">@ViewBag.TotalBookings</div>
+            <div class="dashboard-stat-label">Total Bookings</div>
+            <div class="dashboard-stat-sub">@ViewBag.PendingBookings pending review</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dashboard-stat">
+            <div class="dashboard-stat-icon">💰</div>
+            <div class="dashboard-stat-value"><span class="price-tag">R@(((decimal)ViewBag.TotalEarnings).ToString("N0"))</span></div>
+            <div class="dashboard-stat-label">Total Earnings</div>
+            <div class="dashboard-stat-sub">from confirmed bookings</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dashboard-stat">
+            <div class="dashboard-stat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--gold);"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+            </div>
+            <div class="dashboard-stat-value">@(((double)ViewBag.AverageRating).ToString("0.0"))</div>
+            <div class="dashboard-stat-label">Average Rating</div>
+            <div class="dashboard-stat-sub">@ViewBag.TotalReviews review@(ViewBag.TotalReviews == 1 ? "" : "s")</div>
+        </div>
+    </div>
 </div>
 
-<div class="mt-4">
+<div class="row g-3 mt-1">
+    <div class="col-md-4">
+        <a asp-controller="Messages" asp-action="Inbox" class="dashboard-link-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="dashboard-link-title">Messages</div>
+                    <div class="text-muted small">View your inbox</div>
+                </div>
+                @if (ViewBag.UnreadMessages > 0)
+                {
+                    <span class="badge bg-danger">@ViewBag.UnreadMessages new</span>
+                }
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a asp-controller="Notifications" asp-action="Index" class="dashboard-link-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="dashboard-link-title">Notifications</div>
+                    <div class="text-muted small">Booking &amp; system updates</div>
+                </div>
+                @if (ViewBag.UnreadNotifications > 0)
+                {
+                    <span class="badge bg-danger">@ViewBag.UnreadNotifications new</span>
+                }
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a asp-action="BookingRequests" class="dashboard-link-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="dashboard-link-title">Booking Requests</div>
+                    <div class="text-muted small">Approve or reject stays</div>
+                </div>
+                @if (ViewBag.PendingBookings > 0)
+                {
+                    <span class="badge bg-warning text-dark">@ViewBag.PendingBookings pending</span>
+                }
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="performance-panel mt-4">
+    <div class="section-eyebrow" style="margin:0 0 1rem;padding:0;border:none;">Performance Metrics</div>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="metric-block">
+                <div class="metric-value">@ViewBag.OccupancyRate%</div>
+                <div class="metric-label">Active Listing Rate</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-block">
+                <div class="metric-value">R@(((decimal)ViewBag.AverageBookingValue).ToString("N0"))</div>
+                <div class="metric-label">Avg. Booking Value</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-block">
+                <div class="metric-value">@ViewBag.BookingsThisMonth</div>
+                <div class="metric-label">Bookings This Month</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 d-flex gap-2">
     <a asp-action="MyProperties" class="btn btn-primary">My Properties</a>
     <a asp-action="AddProperty" class="btn btn-outline-primary">Add Property</a>
-    <a asp-action="BookingRequests" class="btn btn-outline-secondary">Booking Requests</a>
     <a asp-action="CheckIns" class="btn btn-outline-secondary">Guest Check-Ins</a>
 </div>

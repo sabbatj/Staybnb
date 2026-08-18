@@ -1,5 +1,14 @@
 @model Staybnb.Web.Models.Booking
-@{ ViewData["Title"] = "Guest Check-in"; }
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Guest Check-in";
+
+    var requiredDocuments = Model.Property?.CheckInProcess != null
+        ? JsonSerializer.Deserialize<List<string>>(
+            Model.Property.CheckInProcess.RequiredDocumentsJson) ?? new List<string>()
+        : new List<string>();
+}
 
 <h1>Check-in: @Model.Property?.Title</h1>
 
@@ -10,31 +19,90 @@
 
 @if (Model.Property?.CheckInProcess != null)
 {
-    var steps = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Model.Property.CheckInProcess.StepsJson) ?? new();
-    <h5>@Model.Property.CheckInProcess.Title</h5>
-    <ol>
-        @foreach (var s in steps) { <li>@s</li> }
-    </ol>
+    var steps =
+        JsonSerializer.Deserialize<List<string>>(
+            Model.Property.CheckInProcess.StepsJson) ?? new List<string>();
 
-    <form asp-action="SubmitCheckIn" method="post" enctype="multipart/form-data" class="row g-3 mt-3">
-        <input type="hidden" name="bookingId" value="@Model.Id" />
-        <div class="col-md-4">
-            <label class="form-label">Document Type</label>
-            <select name="documentType" class="form-select">
-                <option value="ID">ID</option>
-                <option value="Passport">Passport</option>
-            </select>
+    <h5>@Model.Property.CheckInProcess.Title</h5>
+
+    @if (steps.Any())
+    {
+        <ol>
+            @foreach (var step in steps)
+            {
+                <li>@step</li>
+            }
+        </ol>
+    }
+
+    @if (requiredDocuments.Any())
+    {
+        <div class="mt-4">
+            <h5>Required documents</h5>
+            <p class="text-muted">
+                Please provide the following document(s) to complete check-in.
+            </p>
+
+            <ul class="list-group mb-4">
+                @foreach (var documentType in requiredDocuments)
+                {
+                    <li class="list-group-item">
+                        <strong>@documentType</strong>
+                        <span class="badge bg-warning text-dark float-end">
+                            Required
+                        </span>
+                    </li>
+                }
+            </ul>
+
+            <form asp-action="SubmitCheckIn"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="row g-3">
+
+                <input type="hidden" name="bookingId" value="@Model.Id" />
+
+                <div class="col-md-4">
+                    <label class="form-label">Document Type</label>
+                    <select name="documentType"
+                            class="form-select"
+                            required>
+                        @foreach (var documentType in requiredDocuments)
+                        {
+                            <option value="@documentType">
+                                @documentType
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-8">
+                    <label class="form-label">Upload Document</label>
+                    <input type="file"
+                           name="document"
+                           class="form-control"
+                           accept="image/*,.pdf"
+                           required />
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        Submit Check-in
+                    </button>
+                </div>
+            </form>
         </div>
-        <div class="col-md-8">
-            <label class="form-label">Upload Document</label>
-            <input type="file" name="document" class="form-control" accept="image/*,.pdf" />
+    }
+    else
+    {
+        <div class="alert alert-info mt-4">
+            No documents are required for this property's check-in process.
         </div>
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">Submit Check-in</button>
-        </div>
-    </form>
+    }
 }
 else
 {
-    <p class="text-muted">The host hasn't configured a check-in process for this property yet.</p>
+    <p class="text-muted">
+        The host hasn't configured a check-in process for this property yet.
+    </p>
 }

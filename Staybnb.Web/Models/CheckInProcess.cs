@@ -8,5 +8,9 @@ public class CheckInProcess
 
     public string Title { get; set; } = string.Empty;
     public string StepsJson { get; set; } = string.Empty;
+
+    // JSON array of required guest documents, e.g. ["ID", "Passport"]
+    public string RequiredDocumentsJson { get; set; } = "[]";
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -11,4 +11,8 @@ public class CheckInProcessViewModel
 
     [Required]
     public string StepsText { get; set; } = string.Empty; // one step per line
+
+    public bool RequireId { get; set; }
+
+    public bool RequirePassport { get; set; }
 }

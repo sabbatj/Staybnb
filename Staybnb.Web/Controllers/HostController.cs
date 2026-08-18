@@ -37,14 +37,48 @@ public class HostController : Controller
     {
         var hostId = CurrentUserId;
 
-        ViewBag.TotalProperties = await _context.HostProperties.CountAsync(p => p.HostId == hostId);
+        var propertyIds = await _context.HostProperties
+            .Where(p => p.HostId == hostId)
+            .Select(p => p.Id)
+            .ToListAsync();
+
+        ViewBag.TotalProperties = propertyIds.Count;
         ViewBag.ActiveProperties = await _context.HostProperties.CountAsync(p => p.HostId == hostId && p.IsActive);
-        ViewBag.PendingBookings = await _context.Bookings
-            .Include(b => b.Property)
-            .CountAsync(b => b.Property!.HostId == hostId && b.Status == BookingStatus.Pending);
-        ViewBag.TotalBookings = await _context.Bookings
-            .Include(b => b.Property)
-            .CountAsync(b => b.Property!.HostId == hostId);
+
+        var hostBookings = await _context.Bookings
+            .Where(b => propertyIds.Contains(b.PropertyId))
+            .ToListAsync();
+
+        ViewBag.PendingBookings = hostBookings.Count(b => b.Status == BookingStatus.Pending);
+        ViewBag.TotalBookings = hostBookings.Count;
+
+        var confirmedBookings = hostBookings
+            .Where(b => b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn || b.Status == BookingStatus.Completed)
+            .ToList();
+
+        ViewBag.TotalEarnings = confirmedBookings.Sum(b => b.TotalPrice);
+        ViewBag.AverageBookingValue = confirmedBookings.Any() ? confirmedBookings.Average(b => b.TotalPrice) : 0;
+
+        var bookingsThisMonth = hostBookings.Count(b => b.CreatedAt.Month == DateTime.UtcNow.Month && b.CreatedAt.Year == DateTime.UtcNow.Year);
+        ViewBag.BookingsThisMonth = bookingsThisMonth;
+
+        var reviews = await _context.Reviews
+            .Where(r => propertyIds.Contains(r.PropertyId))
+            .ToListAsync();
+
+        ViewBag.AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
+        ViewBag.TotalReviews = reviews.Count;
+
+        ViewBag.UnreadMessages = await _context.Messages
+            .CountAsync(m => m.ReceiverId == hostId && !m.IsRead);
+
+        ViewBag.UnreadNotifications = await _context.Notifications
+            .CountAsync(n => n.UserId == hostId && !n.IsRead);
+
+        var occupancyRate = ViewBag.TotalProperties > 0
+            ? Math.Round((double)ViewBag.ActiveProperties / ViewBag.TotalProperties * 100, 0)
+            : 0;
+        ViewBag.OccupancyRate = occupancyRate;
 
         return View();
     }
@@ -247,13 +281,21 @@ public class HostController : Controller
 
         if (property == null) return NotFound();
 
+        var requiredDocuments = property.CheckInProcess != null
+            ? JsonSerializer.Deserialize<List<string>>(
+                property.CheckInProcess.RequiredDocumentsJson) ?? new List<string>()
+            : new List<string>();
+
         var model = new CheckInProcessViewModel
         {
             PropertyId = property.Id,
             Title = property.CheckInProcess?.Title ?? "Check-in Instructions",
             StepsText = property.CheckInProcess != null
-                ? string.Join("\n", JsonSerializer.Deserialize<List<string>>(property.CheckInProcess.StepsJson) ?? new())
-                : string.Empty
+                ? string.Join("\n",
+                    JsonSerializer.Deserialize<List<string>>(property.CheckInProcess.StepsJson) ?? new())
+                : string.Empty,
+            RequireId = requiredDocuments.Contains("ID"),
+            RequirePassport = requiredDocuments.Contains("Passport")
         };
 
         return View(model);
@@ -272,7 +314,18 @@ public class HostController : Controller
         var steps = model.StepsText
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
+
         var stepsJson = JsonSerializer.Serialize(steps);
+
+        var requiredDocuments = new List<string>();
+
+        if (model.RequireId)
+            requiredDocuments.Add("ID");
+
+        if (model.RequirePassport)
+            requiredDocuments.Add("Passport");
+
+        var requiredDocumentsJson = JsonSerializer.Serialize(requiredDocuments);
 
         if (property.CheckInProcess == null)
         {
@@ -281,6 +334,7 @@ public class HostController : Controller
                 PropertyId = property.Id,
                 Title = model.Title,
                 StepsJson = stepsJson,
+                RequiredDocumentsJson = requiredDocumentsJson,
                 CreatedAt = DateTime.UtcNow
             });
         }
@@ -288,10 +342,14 @@ public class HostController : Controller
         {
             property.CheckInProcess.Title = model.Title;
             property.CheckInProcess.StepsJson = stepsJson;
+            property.CheckInProcess.RequiredDocumentsJson = requiredDocumentsJson;
         }
 
         await _context.SaveChangesAsync();
-        await _activityLog.LogAsync(CurrentUserId, $"Configured check-in process for '{property.Title}'", ActivityType.PropertyChange);
+        await _activityLog.LogAsync(
+            CurrentUserId,
+            $"Configured check-in process for '{property.Title}'",
+            ActivityType.PropertyChange);
 
         return RedirectToAction(nameof(MyProperties));
     }

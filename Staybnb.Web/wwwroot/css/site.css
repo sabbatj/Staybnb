@@ -126,15 +126,50 @@ a:hover { color: var(--gold-deep); }
 .btn-outline-danger {
   color: var(--clay);
   border: 1.5px solid var(--clay);
-  background: transparent;
+  background: #fff;
+  min-width: 96px;
+  min-height: 42px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.18s ease;
 }
-.btn-outline-danger:hover { background: var(--clay); color: #fff; }
+
+.btn-outline-danger:hover {
+  background: var(--clay);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(180, 91, 67, 0.18);
+}
+
+.btn-outline-danger:active {
+  transform: translateY(0);
+}
+
 .btn-success {
   background: var(--teal);
   border: 1px solid var(--teal);
   color: #fff;
+  min-width: 96px;
+  min-height: 42px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.18s ease;
 }
-.btn-success:hover { background: var(--teal-deep); }
+
+.btn-success:hover {
+  background: var(--teal-deep);
+  border-color: var(--teal-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(35, 105, 93, 0.22);
+}
+
+.btn-success:active {
+  transform: translateY(0);
+}
 .btn-ghost {
   background: transparent;
   border: 1px solid var(--line);
@@ -677,4 +712,94 @@ a.wishlist-heart {
   font-size: 0.7rem;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
+}
+
+/* ---------- Host/Admin Dashboard stat cards ---------- */
+.dashboard-stat {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.25rem;
+  height: 100%;
+}
+.dashboard-stat-icon {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+.dashboard-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.dashboard-stat-label {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+.dashboard-stat-sub {
+  font-size: 0.75rem;
+  color: var(--slate);
+  margin-top: 0.15rem;
+}
+
+.dashboard-link-card {
+  display: block;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.dashboard-link-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 14px rgba(22,33,58,0.08);
+  color: inherit;
+}
+.dashboard-link-title {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.performance-panel {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.metric-block {
+  text-align: center;
+  padding: 0.5rem;
+}
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--teal-deep);
+}
+.metric-label {
+  font-size: 0.78rem;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.3rem;
+}
+
+/* Booking request actions */
+.booking-actions {
+  white-space: nowrap;
+}
+
+.booking-actions form {
+  display: inline-block;
+  margin-right: 8px;
+  margin-bottom: 6px;
+}
+
+.booking-actions form:last-child {
+  margin-right: 0;
 }

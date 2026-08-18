@@ -149,15 +149,34 @@ public class BookingController : Controller
             .FirstOrDefaultAsync(b => b.Id == bookingId && b.GuestId == CurrentUserId);
 
         if (booking == null) return NotFound();
+
         if (booking.Property?.CheckInProcess == null)
         {
             TempData["Error"] = "The host has not configured a check-in process for this property yet.";
             return RedirectToAction(nameof(CheckIn), new { bookingId });
         }
 
+        if (string.IsNullOrWhiteSpace(documentType))
+        {
+            TempData["Error"] = "Please select a document type.";
+            return RedirectToAction(nameof(CheckIn), new { bookingId });
+        }
+
+        var requiredDocuments =
+            System.Text.Json.JsonSerializer.Deserialize<List<string>>(
+                booking.Property.CheckInProcess.RequiredDocumentsJson) ?? new List<string>();
+
+        if (!requiredDocuments.Any(d =>
+            string.Equals(d, documentType, StringComparison.OrdinalIgnoreCase)))
+        {
+            TempData["Error"] =
+                $"The document type '{documentType}' is not required for this property's check-in process.";
+            return RedirectToAction(nameof(CheckIn), new { bookingId });
+        }
+
         if (document == null || document.Length == 0)
         {
-            TempData["Error"] = "Please upload a document (ID or Passport).";
+            TempData["Error"] = $"Please upload your {documentType}.";
             return RedirectToAction(nameof(CheckIn), new { bookingId });
         }
 
