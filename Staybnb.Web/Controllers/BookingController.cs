@@ -60,6 +60,20 @@ public class BookingController : Controller
         var property = await _context.HostProperties.FirstOrDefaultAsync(p => p.Id == model.PropertyId && p.IsActive);
         if (property == null) return NotFound();
 
+        var conflictingBooking = await _context.Bookings
+            .AnyAsync(b =>
+                b.PropertyId == model.PropertyId &&
+                b.Status != BookingStatus.Rejected &&
+                b.Status != BookingStatus.Cancelled &&
+                model.CheckInDate < b.CheckOutDate &&
+                model.CheckOutDate > b.CheckInDate);
+
+        if (conflictingBooking)
+        {
+            ModelState.AddModelError(string.Empty,
+                "This property is already booked for some or all of those dates.");
+        }
+
         var nights = (model.CheckOutDate - model.CheckInDate).Days;
 
         if (nights <= 0)
@@ -113,6 +127,7 @@ public class BookingController : Controller
     {
         var bookings = await _context.Bookings
             .Include(b => b.Property)!.ThenInclude(p => p!.Images)
+            .Include(b => b.GuestCheckIn)!.ThenInclude(c => c!.Documents)
             .Where(b => b.GuestId == CurrentUserId)
             .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();
@@ -239,22 +254,11 @@ public class BookingController : Controller
             .Select(d => d.DocumentType)
             .ToListAsync();
 
-        var allRequiredDocumentsUploaded = requiredDocuments.All(required =>
-            uploadedDocumentTypes.Any(uploaded =>
-                string.Equals(uploaded, required, StringComparison.OrdinalIgnoreCase)));
+        // Uploading a document does NOT complete check-in.
+        // The host must verify the document first.
+        guestCheckIn.Status = CheckInStatus.Submitted;
 
-        if (allRequiredDocumentsUploaded)
-        {
-            guestCheckIn.Status = CheckInStatus.Submitted;
-            booking.Status = BookingStatus.CheckedIn;
-
-            await _context.SaveChangesAsync();
-
-            await _activityLog.LogAsync(
-                CurrentUserId!,
-                $"Completed check-in for booking #{booking.Id}",
-                ActivityType.BookingStatusUpdate);
-        }
+        await _context.SaveChangesAsync();
 
         return RedirectToAction(nameof(MyBookings));
     }

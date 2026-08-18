@@ -34,6 +34,13 @@
                         };
                     }
                     <span class="badge @badgeClass">@b.Status</span>
+
+                    @if (b.Status == Staybnb.Web.Models.BookingStatus.CheckedIn)
+                    {
+                        <div class="alert alert-success mt-2 mb-0 py-2">
+                            ✓ Your stay is confirmed and check-in is verified.
+                        </div>
+                    }
                 </div>
                 <div class="col-md-3 text-end p-3">
                     @if (b.Status == Staybnb.Web.Models.BookingStatus.Approved)

@@ -20,4 +20,7 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Staybnb.Web.Tests/**/*.cs" />
+  </ItemGroup>
 </Project>

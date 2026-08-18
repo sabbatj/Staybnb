@@ -382,10 +382,25 @@ public class HostController : Controller
 
         document.Status = DocumentStatus.Verified;
 
-        if (document.GuestCheckIn != null &&
-            document.GuestCheckIn.Documents.All(d => d.Status == DocumentStatus.Verified))
+        if (document.GuestCheckIn != null)
         {
-            document.GuestCheckIn.Status = CheckInStatus.Verified;
+            var checkIn = document.GuestCheckIn;
+
+            // ID OR Passport is sufficient for this requirement.
+            var hasVerifiedIdentity = checkIn.Documents.Any(d =>
+                (string.Equals(d.DocumentType, "ID", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(d.DocumentType, "Passport", StringComparison.OrdinalIgnoreCase)) &&
+                d.Status == DocumentStatus.Verified);
+
+            if (hasVerifiedIdentity)
+            {
+                checkIn.Status = CheckInStatus.Verified;
+
+                if (checkIn.Booking != null)
+                {
+                    checkIn.Booking.Status = BookingStatus.CheckedIn;
+                }
+            }
         }
 
         await _context.SaveChangesAsync();
