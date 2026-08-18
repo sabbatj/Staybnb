@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Staybnb.Web.Constants;
 using Staybnb.Web.Data;
 using Staybnb.Web.Models;
+using Staybnb.Web.Models.ViewModels;
 using Staybnb.Web.Services;
 
 namespace Staybnb.Web.Controllers;
@@ -136,6 +137,59 @@ public class AdminController : Controller
     {
         await _userRoleService.PromoteGuestToAdminAsync(id);
         return RedirectToAction(nameof(Users));
+    }
+
+    public async Task<IActionResult> Hosts()
+    {
+        var hosts = await _userManager.GetUsersInRoleAsync(Roles.Host);
+
+        var hostRows = new List<HostManagementRow>();
+
+        foreach (var host in hosts)
+        {
+            var properties = await _context.HostProperties
+                .Where(p => p.HostId == host.Id)
+                .ToListAsync();
+
+            hostRows.Add(new HostManagementRow
+            {
+                UserId = host.Id,
+                Name = $"{host.FirstName} {host.LastName}".Trim(),
+                Email = host.Email ?? string.Empty,
+                PropertyCount = properties.Count,
+                ActivePropertyCount = properties.Count(p => p.IsActive)
+            });
+        }
+
+        return View(hostRows.OrderBy(h => h.Name).ToList());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveHost(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+
+        if (user == null)
+            return NotFound();
+
+        var removed = await _userRoleService.RemoveHostAsync(id);
+
+        if (!removed)
+        {
+            TempData["Error"] = "Unable to remove this host.";
+            return RedirectToAction(nameof(Hosts));
+        }
+
+        await _activityLog.LogAsync(
+            _userManager.GetUserId(User)!,
+            $"Removed Host access for user {user.Email}",
+            ActivityType.RoleChange);
+
+        TempData["Success"] =
+            $"Host access removed for {user.Email}. Their properties were deactivated.";
+
+        return RedirectToAction(nameof(Hosts));
     }
 
     public async Task<IActionResult> ActivityLogs()

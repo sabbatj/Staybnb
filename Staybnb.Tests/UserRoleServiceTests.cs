@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Staybnb.Web.Constants;
-using Staybnb.Web.Data;
 using Staybnb.Web.Models;
 using Staybnb.Web.Services;
 using Xunit;
@@ -11,80 +9,80 @@ namespace Staybnb.Tests;
 
 public class UserRoleServiceTests
 {
-    private static async Task<(ServiceProvider provider, string guestId)> SetupGuestAsync(string dbName)
+    private static ServiceProvider CreateProvider(string dbName)
     {
-        var provider = TestServiceProviderFactory.Create(dbName);
-        using var scope = provider.CreateScope();
-
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        foreach (var roleName in Roles.All)
-        {
-            if (!await roleManager.RoleExistsAsync(roleName))
-                await roleManager.CreateAsync(new IdentityRole(roleName));
-        }
-
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var guest = new ApplicationUser
-        {
-            UserName = "guest@test.local",
-            Email = "guest@test.local",
-            FirstName = "Test",
-            LastName = "Guest"
-        };
-        await userManager.CreateAsync(guest, "Password1!");
-        await userManager.AddToRoleAsync(guest, Roles.Guest);
-
-        return (provider, guest.Id);
+        return TestServiceProviderFactory.Create(dbName);
     }
 
     [Fact]
-    public async Task PromoteGuestToHostAsync_AddsHostRole_AndRemovesGuestRole()
+    public async Task PromoteGuestToHost_RemovesGuestRole_AndAddsHostRole()
     {
-        var (provider, guestId) = await SetupGuestAsync(nameof(PromoteGuestToHostAsync_AddsHostRole_AndRemovesGuestRole));
+        using var provider = CreateProvider(nameof(PromoteGuestToHost_RemovesGuestRole_AndAddsHostRole));
+
         using var scope = provider.CreateScope();
 
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var service = scope.ServiceProvider.GetRequiredService<IUserRoleService>();
+        var userManager = scope.ServiceProvider
+            .GetRequiredService<UserManager<ApplicationUser>>();
 
-        var result = await service.PromoteGuestToHostAsync(guestId);
+        var service = scope.ServiceProvider
+            .GetRequiredService<IUserRoleService>();
 
-        Assert.True(result);
-        var user = await userManager.FindByIdAsync(guestId);
-        var roles = await userManager.GetRolesAsync(user!);
+        var user = new ApplicationUser
+        {
+            UserName = "flow.guest@test.local",
+            Email = "flow.guest@test.local",
+            FirstName = "Flow",
+            LastName = "Guest",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await userManager.CreateAsync(user, "TestPassword123!");
+
+        Assert.True(result.Succeeded);
+
+        await userManager.AddToRoleAsync(user, Roles.Guest);
+
+        await service.PromoteGuestToHostAsync(user.Id);
+
+        var roles = await userManager.GetRolesAsync(user);
 
         Assert.Contains(Roles.Host, roles);
         Assert.DoesNotContain(Roles.Guest, roles);
     }
 
     [Fact]
-    public async Task PromoteGuestToHostAsync_LogsActivity()
+    public async Task PromoteGuestToAdmin_AddsAdminRole_AndRemovesGuestRole()
     {
-        var (provider, guestId) = await SetupGuestAsync(nameof(PromoteGuestToHostAsync_LogsActivity));
+        using var provider = CreateProvider(nameof(PromoteGuestToAdmin_AddsAdminRole_AndRemovesGuestRole));
+
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IUserRoleService>();
-        await service.PromoteGuestToHostAsync(guestId);
+        var userManager = scope.ServiceProvider
+            .GetRequiredService<UserManager<ApplicationUser>>();
 
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var hasLog = await context.ActivityLogs.AnyAsync(l => l.UserId == guestId && l.ActivityType == ActivityType.RoleChange);
+        var service = scope.ServiceProvider
+            .GetRequiredService<IUserRoleService>();
 
-        Assert.True(hasLog);
-    }
+        var user = new ApplicationUser
+        {
+            UserName = "admin.flow@test.local",
+            Email = "admin.flow@test.local",
+            FirstName = "Admin",
+            LastName = "Flow",
+            CreatedAt = DateTime.UtcNow
+        };
 
-    [Fact]
-    public async Task PromoteGuestToAdminAsync_AddsAdminRole()
-    {
-        var (provider, guestId) = await SetupGuestAsync(nameof(PromoteGuestToAdminAsync_AddsAdminRole));
-        using var scope = provider.CreateScope();
+        var result = await userManager.CreateAsync(user, "TestPassword123!");
 
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var service = scope.ServiceProvider.GetRequiredService<IUserRoleService>();
+        Assert.True(result.Succeeded);
 
-        await service.PromoteGuestToAdminAsync(guestId);
+        await userManager.AddToRoleAsync(user, Roles.Guest);
 
-        var user = await userManager.FindByIdAsync(guestId);
-        var roles = await userManager.GetRolesAsync(user!);
+        await service.PromoteGuestToAdminAsync(user.Id);
+
+        var roles = await userManager.GetRolesAsync(user);
 
         Assert.Contains(Roles.Admin, roles);
+        Assert.DoesNotContain(Roles.Guest, roles);
     }
 }

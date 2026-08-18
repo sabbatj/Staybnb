@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Staybnb.Web.Constants;
 using Staybnb.Web.Data;
 using Staybnb.Web.Models;
 using Staybnb.Web.Services;
@@ -14,32 +15,71 @@ public static class TestServiceProviderFactory
     {
         var services = new ServiceCollection();
 
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseInMemoryDatabase(dbName));
+        // Test configuration required by RoleSeeder and other services.
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Seed:SuperAdminEmail"] = "test-admin@staybnb.local",
+                ["Seed:SuperAdminPassword"] = "TestPassword123!",
+                ["SuperAdmin:Email"] = "test-admin@staybnb.local",
+                ["SuperAdmin:Password"] = "TestPassword123!"
+            })
+            .Build();
+
+        services.AddSingleton<IConfiguration>(configuration);
 
         services.AddLogging();
 
-        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseInMemoryDatabase(dbName));
+
+        services
+            .AddIdentityCore<ApplicationUser>(options =>
             {
-                options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = false;
                 options.Password.RequireUppercase = false;
-                options.Password.RequiredLength = 4;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 6;
             })
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders();
+            .AddSignInManager();
 
-        var configValues = new Dictionary<string, string?>
-        {
-            { "SuperAdminSeed:Email", "superadmin@staybnb.local" },
-            { "SuperAdminSeed:Password", "SuperAdmin123!" }
-        };
-        var config = new ConfigurationBuilder().AddInMemoryCollection(configValues).Build();
-        services.AddSingleton<IConfiguration>(config);
-
+        // Application services used by the flow tests.
         services.AddScoped<IActivityLogService, ActivityLogService>();
         services.AddScoped<IUserRoleService, UserRoleService>();
 
-        return services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
+
+        SeedRolesAsync(provider).GetAwaiter().GetResult();
+
+        return provider;
+    }
+
+    private static async Task SeedRolesAsync(ServiceProvider provider)
+    {
+        using var scope = provider.CreateScope();
+
+        var roleManager = scope.ServiceProvider
+            .GetRequiredService<RoleManager<IdentityRole>>();
+
+        foreach (var role in Roles.All)
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                var result = await roleManager.CreateAsync(
+                    new IdentityRole(role));
+
+                if (!result.Succeeded)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to create test role '{role}': " +
+                        string.Join(
+                            ", ",
+                            result.Errors.Select(e => e.Description)));
+                }
+            }
+        }
     }
 }
