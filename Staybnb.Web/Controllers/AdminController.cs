@@ -29,6 +29,19 @@ public class AdminController : Controller
         _activityLog = activityLog;
     }
 
+    [AllowAnonymous]
+    public async Task<IActionResult> DebugListUsers()
+    {
+        var users = await _userManager.Users.ToListAsync();
+        var result = new List<object>();
+        foreach (var u in users)
+        {
+            var roles = await _userManager.GetRolesAsync(u);
+            result.Add(new { u.Email, u.FirstName, u.LastName, Roles = string.Join(", ", roles), u.CreatedAt });
+        }
+        return Json(result);
+    }
+
     public async Task<IActionResult> Dashboard()
     {
         ViewBag.TotalUsers = await _context.Users.CountAsync();

@@ -145,7 +145,7 @@ public class BookingController : Controller
     {
         var booking = await _context.Bookings
             .Include(b => b.Property)!.ThenInclude(p => p!.CheckInProcess)
-            .Include(b => b.GuestCheckIn)
+            .Include(b => b.GuestCheckIn)!.ThenInclude(g => g!.Documents)
             .FirstOrDefaultAsync(b => b.Id == bookingId && b.GuestId == CurrentUserId);
 
         if (booking == null) return NotFound();
@@ -164,13 +164,15 @@ public class BookingController : Controller
 
         var requiredDocuments =
             System.Text.Json.JsonSerializer.Deserialize<List<string>>(
-                booking.Property.CheckInProcess.RequiredDocumentsJson) ?? new List<string>();
+                booking.Property.CheckInProcess.RequiredDocumentsJson)
+            ?? new List<string>();
 
         if (!requiredDocuments.Any(d =>
             string.Equals(d, documentType, StringComparison.OrdinalIgnoreCase)))
         {
             TempData["Error"] =
                 $"The document type '{documentType}' is not required for this property's check-in process.";
+
             return RedirectToAction(nameof(CheckIn), new { bookingId });
         }
 
@@ -181,6 +183,7 @@ public class BookingController : Controller
         }
 
         var guestCheckIn = booking.GuestCheckIn;
+
         if (guestCheckIn == null)
         {
             guestCheckIn = new GuestCheckIn
@@ -190,6 +193,7 @@ public class BookingController : Controller
                 Status = CheckInStatus.Submitted,
                 CreatedAt = DateTime.UtcNow
             };
+
             _context.GuestCheckIns.Add(guestCheckIn);
             await _context.SaveChangesAsync();
         }
@@ -198,10 +202,23 @@ public class BookingController : Controller
             guestCheckIn.Status = CheckInStatus.Submitted;
         }
 
+        var alreadyUploaded = guestCheckIn.Documents.Any(d =>
+            string.Equals(d.DocumentType, documentType, StringComparison.OrdinalIgnoreCase));
+
+        if (alreadyUploaded)
+        {
+            TempData["Error"] =
+                $"You have already uploaded your {documentType}. Please choose another required document.";
+
+            return RedirectToAction(nameof(CheckIn), new { bookingId });
+        }
+
         var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "documents");
         Directory.CreateDirectory(uploadsFolder);
+
         var fileName = $"{Guid.NewGuid()}{Path.GetExtension(document.FileName)}";
         var filePath = Path.Combine(uploadsFolder, fileName);
+
         using (var stream = new FileStream(filePath, FileMode.Create))
         {
             await document.CopyToAsync(stream);
@@ -215,10 +232,29 @@ public class BookingController : Controller
             Status = DocumentStatus.Pending
         });
 
-        booking.Status = BookingStatus.CheckedIn;
-
         await _context.SaveChangesAsync();
-        await _activityLog.LogAsync(CurrentUserId, $"Completed check-in for booking #{booking.Id}", ActivityType.BookingStatusUpdate);
+
+        var uploadedDocumentTypes = await _context.GuestDocuments
+            .Where(d => d.GuestCheckInId == guestCheckIn.Id)
+            .Select(d => d.DocumentType)
+            .ToListAsync();
+
+        var allRequiredDocumentsUploaded = requiredDocuments.All(required =>
+            uploadedDocumentTypes.Any(uploaded =>
+                string.Equals(uploaded, required, StringComparison.OrdinalIgnoreCase)));
+
+        if (allRequiredDocumentsUploaded)
+        {
+            guestCheckIn.Status = CheckInStatus.Submitted;
+            booking.Status = BookingStatus.CheckedIn;
+
+            await _context.SaveChangesAsync();
+
+            await _activityLog.LogAsync(
+                CurrentUserId!,
+                $"Completed check-in for booking #{booking.Id}",
+                ActivityType.BookingStatusUpdate);
+        }
 
         return RedirectToAction(nameof(MyBookings));
     }

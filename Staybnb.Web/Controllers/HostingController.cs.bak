@@ -104,8 +104,6 @@ public class HostingController : Controller
 
         // Notify every current Admin about the new host application.
         var admins = await _userManager.GetUsersInRoleAsync(Roles.Admin);
-        var applicant = await _userManager.FindByIdAsync(userId);
-        var applicantName = applicant?.Email ?? "A guest";
 
         foreach (var admin in admins)
         {
@@ -113,7 +111,7 @@ public class HostingController : Controller
             {
                 UserId = admin.Id,
                 Title = "New Host Application",
-                Message = $"{applicantName} submitted a host application for '{property.Title}'.",
+                Message = $"{User?.Identity?.Name ?? "A guest"} submitted a host application for '{property.Title}'.",
                 Type = NotificationType.HostApplicationUpdate,
                 ActionUrl = Url.Action("Applications", "Admin"),
                 IsRead = false,
@@ -123,10 +121,7 @@ public class HostingController : Controller
 
         await _context.SaveChangesAsync();
 
-        await _activityLog.LogAsync(
-            userId,
-            $"Submitted host application for property '{property.Title}'",
-            ActivityType.HostApplication);
+        await _activityLog.LogAsync(userId, $"Submitted host application for property '{property.Title}'", ActivityType.HostApplication);
 
         return RedirectToAction(nameof(MyApplications));
     }

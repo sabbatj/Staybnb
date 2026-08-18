@@ -83,18 +83,6 @@ public class AccountController : Controller
             {
                 await _activityLog.LogAsync(user.Id, "User logged in", ActivityType.Login);
             }
-            var roles = await _userManager.GetRolesAsync(user);
-
-            if (roles.Contains(Roles.SuperAdmin) || roles.Contains(Roles.Admin))
-            {
-                return RedirectToAction("Dashboard", "Admin");
-            }
-
-            if (roles.Contains(Roles.Host))
-            {
-                return RedirectToAction("Dashboard", "Host");
-            }
-
             return RedirectToAction("Index", "Home");
         }
 

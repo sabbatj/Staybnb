@@ -39,12 +39,27 @@ public class UserRoleService : IUserRoleService
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null) return false;
 
-        if (!await _userManager.IsInRoleAsync(user, Roles.Admin))
+        if (await _userManager.IsInRoleAsync(user, Roles.Guest))
         {
-            await _userManager.AddToRoleAsync(user, Roles.Admin);
+            var removeGuestResult = await _userManager.RemoveFromRoleAsync(user, Roles.Guest);
+
+            if (!removeGuestResult.Succeeded)
+                return false;
         }
 
-        await _activityLog.LogAsync(userId, "Promoted to Admin by SuperAdmin", ActivityType.RoleChange);
+        if (!await _userManager.IsInRoleAsync(user, Roles.Admin))
+        {
+            var addAdminResult = await _userManager.AddToRoleAsync(user, Roles.Admin);
+
+            if (!addAdminResult.Succeeded)
+                return false;
+        }
+
+        await _activityLog.LogAsync(
+            userId,
+            "Promoted to Admin by SuperAdmin",
+            ActivityType.RoleChange);
+
         return true;
     }
 }
