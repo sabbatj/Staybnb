@@ -562,55 +562,6 @@ Testing:
 - Entity Framework Core InMemory
 
 
-PROJECT STRUCTURE
-=================
-
-Staybnb.Web/
-|
-+-- Controllers/
-|   +-- AccountController.cs
-|   +-- AdminController.cs
-|   +-- BookingController.cs
-|   +-- HostController.cs
-|   +-- PropertyController.cs
-|   +-- ...
-|
-+-- Models/
-|   +-- ApplicationUser.cs
-|   +-- Booking.cs
-|   +-- HostApplication.cs
-|   +-- HostProperty.cs
-|   +-- PropertyImage.cs
-|   +-- GuestDocument.cs
-|   +-- CheckInProcess.cs
-|   +-- ActivityLog.cs
-|   +-- Message.cs
-|   +-- Notification.cs
-|   +-- ...
-|
-+-- Services/
-|   +-- UserRoleService.cs
-|   +-- ActivityLogService.cs
-|   +-- ...
-|
-+-- Data/
-|   +-- ApplicationDbContext.cs
-|   +-- ...
-|
-+-- Views/
-|
-+-- Constants/
-|
-+-- Staybnb.Web.Tests/
-    +-- Requirement1IdentityTests.cs
-    +-- Requirement2HostingTests.cs
-    +-- Requirement3GuestTests.cs
-    +-- Requirement4AdminTests.cs
-    +-- Requirement5Tests.cs
-    +-- BookingAvailabilityTests.cs
-    +-- CheckInWorkflowTests.cs
-
-
 GETTING STARTED
 ===============
 
