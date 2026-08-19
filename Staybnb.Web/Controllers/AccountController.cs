@@ -79,10 +79,13 @@ public class AccountController : Controller
         if (result.Succeeded)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user != null)
+            if (user == null)
             {
-                await _activityLog.LogAsync(user.Id, "User logged in", ActivityType.Login);
+                return RedirectToAction("Login");
             }
+
+            await _activityLog.LogAsync(user.Id, "User logged in", ActivityType.Login);
+
             var roles = await _userManager.GetRolesAsync(user);
 
             if (roles.Contains(Roles.SuperAdmin) || roles.Contains(Roles.Admin))
