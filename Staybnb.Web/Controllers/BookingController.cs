@@ -327,14 +327,17 @@ public class BookingController : Controller
         _context.Reviews.Add(new Review
         {
             PropertyId = model.PropertyId,
-            ReviewerId = CurrentUserId,
+            ReviewerId = CurrentUserId!,
             Rating = model.Rating,
             Comment = model.Comment,
             CreatedAt = DateTime.UtcNow
         });
 
         await _context.SaveChangesAsync();
-        await _activityLog.LogAsync(CurrentUserId, $"Left a review for '{booking.Property?.Title}'", ActivityType.Other);
+        await _activityLog.LogAsync(
+            CurrentUserId!,
+            $"Left a review for '{booking.Property?.Title}'",
+            ActivityType.Other);
 
         TempData["Success"] = "Thanks for your review!";
         return RedirectToAction(nameof(MyBookings));
