@@ -1,4 +1,3 @@
-Sure — here is the full README content in plain TXT format, so you can copy and paste it directly into README.md:
 
 STAYBNB
 =======
