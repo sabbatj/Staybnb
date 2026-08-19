@@ -3,18 +3,45 @@
 
 <h1>Inbox</h1>
 
-@{ var unreadCounts = ViewBag.UnreadCounts as Dictionary<string, int>; }
+@{
+    var unreadCounts = ViewBag.UnreadCounts as Dictionary<string, int>;
+    var latestMessages = ViewBag.LatestMessages as Dictionary<string, Staybnb.Web.Models.Message>;
+}
 
 <ul class="list-group">
 @foreach (var partner in Model)
 {
     var count = unreadCounts != null && unreadCounts.ContainsKey(partner.Id) ? unreadCounts[partner.Id] : 0;
+    var latest = latestMessages != null && latestMessages.ContainsKey(partner.Id) ? latestMessages[partner.Id] : null;
+
     <li class="list-group-item d-flex justify-content-between align-items-center">
-        <a asp-action="Conversation" asp-route-userId="@partner.Id">@partner.FirstName @partner.LastName (@partner.Email)</a>
-        @if (count > 0)
-        {
-            <span class="badge bg-danger rounded-pill">@count</span>
-        }
+        <div>
+            <a asp-action="Conversation" asp-route-userId="@partner.Id">
+                @partner.FirstName @partner.LastName (@partner.Email)
+            </a>
+
+            @if (latest != null)
+            {
+                <div class="text-muted small mt-1">
+                    @latest.Content
+                </div>
+                <div class="text-muted small">
+                    @latest.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                </div>
+            }
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            @if (count > 0)
+            {
+                <span class="badge bg-danger rounded-pill">@count</span>
+            }
+            <a asp-action="Conversation"
+               asp-route-userId="@partner.Id"
+               class="btn btn-sm btn-outline-primary">
+                Reply
+            </a>
+        </div>
     </li>
 }
 </ul>

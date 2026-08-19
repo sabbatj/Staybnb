@@ -24,7 +24,7 @@
                     <strong>@app.Applicant?.FirstName @app.Applicant?.LastName</strong>
                     <div class="text-muted small">@app.Applicant?.Email</div>
                     <div class="mt-1">@app.Property?.Title</div>
-                    <div class="text-muted small">@app.Property?.Address — R@app.Property?.PricePerNight/night</div>
+                    <div class="text-muted small">@app.Property?.Address — @app.Property?.PricePerNight.ToString("C")/night</div>
                 </div>
                 <div class="col-md-2 text-muted small">
                     Applied @app.AppliedAt.ToString("yyyy-MM-dd")<br />

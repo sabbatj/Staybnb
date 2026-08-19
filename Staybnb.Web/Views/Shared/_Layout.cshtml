@@ -19,6 +19,23 @@
     <link rel="stylesheet" href="~/Staybnb.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var db = Context.RequestServices.GetRequiredService<Staybnb.Web.Data.ApplicationDbContext>();
+
+        var unreadMessageCount = !string.IsNullOrEmpty(currentUserId)
+            ? db.Messages.Count(m => m.ReceiverId == currentUserId && !m.IsRead)
+            : 0;
+
+        var unreadNotificationCount = !string.IsNullOrEmpty(currentUserId)
+            ? db.Notifications.Count(n => n.UserId == currentUserId && !n.IsRead)
+            : 0;
+
+        ViewData["UnreadMessageCount"] = unreadMessageCount;
+        ViewData["UnreadNotificationCount"] = unreadNotificationCount;
+    }
+
     <header>
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
@@ -56,13 +73,25 @@ var roles = currentUser != null
     ? await UserManager.GetRolesAsync(currentUser)
     : new List<string>();
                             <li class="nav-item">
-                                <a class="icon-link" asp-controller="Notifications" asp-action="Index" title="Notifications">
+                                <a class="icon-link position-relative" asp-controller="Notifications" asp-action="Index" title="Notifications">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                    @if ((int?)ViewData["UnreadNotificationCount"] > 0)
+                                    {
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            @ViewData["UnreadNotificationCount"]
+                                        </span>
+                                    }
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="icon-link" asp-controller="Messages" asp-action="Inbox" title="Messages">
+                                <a class="icon-link position-relative" asp-controller="Messages" asp-action="Inbox" title="Messages">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+                                    @if ((int?)ViewData["UnreadMessageCount"] > 0)
+                                    {
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            @ViewData["UnreadMessageCount"]
+                                        </span>
+                                    }
                                 </a>
                             </li>
                             <li class="nav-item dropdown ms-2">

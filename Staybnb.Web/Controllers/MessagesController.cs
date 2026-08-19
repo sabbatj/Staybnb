@@ -42,7 +42,16 @@ public class MessagesController : Controller
             .Select(g => new { SenderId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.SenderId, x => x.Count);
 
+        var latestMessages = await _context.Messages
+            .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+            .GroupBy(m => m.SenderId == userId ? m.ReceiverId : m.SenderId)
+            .Select(g => g.OrderByDescending(m => m.Timestamp).First())
+            .ToListAsync();
+
         ViewBag.UnreadCounts = unreadCounts;
+        ViewBag.LatestMessages = latestMessages.ToDictionary(m =>
+            m.SenderId == userId ? m.ReceiverId : m.SenderId);
+
         return View(partners);
     }
 
