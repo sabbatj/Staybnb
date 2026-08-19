@@ -1,6 +1,4 @@
 
-Absolutely. Here is the full updated README as plain text, ready to copy directly into your README.txt or README.md:
-
 STAYBNB
 =======
 
