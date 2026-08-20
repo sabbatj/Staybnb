@@ -47,6 +47,27 @@ public class NotificationsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ViewNotification(int id)
+    {
+        var notification = await _context.Notifications
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == CurrentUserId);
+
+        if (notification == null)
+            return NotFound();
+
+        if (!notification.IsRead)
+        {
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
+        }
+
+        if (!string.IsNullOrWhiteSpace(notification.ActionUrl))
+            return Redirect(notification.ActionUrl);
+
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAllRead()

@@ -192,6 +192,39 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Hosts));
     }
 
+    [HttpPost]
+    [Authorize(Roles = Roles.SuperAdmin)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteUser(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+
+        if (user == null)
+            return NotFound();
+
+        var currentUserId = _userManager.GetUserId(User);
+
+        if (user.Id == currentUserId)
+        {
+            TempData["Error"] = "You cannot delete your own account.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        var deleted = await _userRoleService.DeleteUserAsync(id);
+
+        if (!deleted)
+        {
+            TempData["Error"] =
+                "Unable to delete this user. They may have related records.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        TempData["Success"] =
+            $"User {user.Email} was permanently deleted.";
+
+        return RedirectToAction(nameof(Users));
+    }
+
     public async Task<IActionResult> ActivityLogs()
     {
         var logs = await _context.ActivityLogs

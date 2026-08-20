@@ -44,14 +44,21 @@
                 <div class="col-md-2 text-end">
                     @if (app.Status == Staybnb.Web.Models.ApplicationStatus.Pending)
                     {
-                        <form asp-action="ApproveApplication" method="post" class="d-inline">
-                            <input type="hidden" name="id" value="@app.Id" />
-                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                        </form>
-                        <form asp-action="RejectApplication" method="post" class="d-inline">
-                            <input type="hidden" name="id" value="@app.Id" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
-                        </form>
+                        <div class="d-flex flex-column align-items-end gap-2">
+                            <form asp-action="ApproveApplication" method="post">
+                                <input type="hidden" name="id" value="@app.Id" />
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    Approve
+                                </button>
+                            </form>
+
+                            <form asp-action="RejectApplication" method="post">
+                                <input type="hidden" name="id" value="@app.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Reject
+                                </button>
+                            </form>
+                        </div>
                     }
                 </div>
             </div>

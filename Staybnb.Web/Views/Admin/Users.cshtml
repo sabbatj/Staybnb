@@ -14,9 +14,18 @@
             <td>@user.Email</td>
             <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
             <td>
-                <form asp-action="PromoteToAdmin" method="post">
+                <form asp-action="PromoteToAdmin" method="post" class="d-inline">
                     <input type="hidden" name="id" value="@user.Id" />
                     <button type="submit" class="btn btn-sm btn-primary">Promote to Admin</button>
+                </form>
+
+                <form asp-action="DeleteUser" method="post" class="d-inline ms-2"
+                      onsubmit="return confirm('PERMANENTLY delete @user.Email? This cannot be undone.');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@user.Id" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        Delete User
+                    </button>
                 </form>
             </td>
         </tr>

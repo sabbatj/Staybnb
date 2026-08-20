@@ -129,6 +129,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(n => n.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<Notification>()
+            .HasOne(n => n.HostApplication)
+            .WithMany()
+            .HasForeignKey(n => n.HostApplicationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // ---- HostApplication ----
         builder.Entity<HostApplication>()
             .HasOne(h => h.Applicant)

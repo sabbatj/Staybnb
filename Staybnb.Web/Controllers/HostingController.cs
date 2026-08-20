@@ -115,6 +115,7 @@ public class HostingController : Controller
                 Title = "New Host Application",
                 Message = $"{applicantName} submitted a host application for '{property.Title}'.",
                 Type = NotificationType.HostApplicationUpdate,
+                HostApplicationId = application.Id,
                 ActionUrl = Url.Action("Applications", "Admin"),
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow
