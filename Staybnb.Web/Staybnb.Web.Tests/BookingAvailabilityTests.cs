@@ -83,3 +83,4 @@ public class BookingAvailabilityTests
         Assert.Equal(checkoutTime, booking.CheckedOutAt);
     }
 }
+
