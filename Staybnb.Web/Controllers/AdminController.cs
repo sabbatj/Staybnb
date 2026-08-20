@@ -90,7 +90,8 @@ public class AdminController : Controller
             UserId = application.ApplicationUserId,
             Title = "Host Application Approved",
             Message = $"Congratulations! Your host application for '{application.Property?.Title}' has been approved.",
-            Type = NotificationType.HostApplicationUpdate
+            Type = NotificationType.HostApplicationUpdate,
+            ActionUrl = Url.Action("Dashboard", "Host")
         });
         await _context.SaveChangesAsync();
 
@@ -114,7 +115,8 @@ public class AdminController : Controller
             UserId = application.ApplicationUserId,
             Title = "Host Application Rejected",
             Message = "Unfortunately your host application was not approved.",
-            Type = NotificationType.HostApplicationUpdate
+            Type = NotificationType.HostApplicationUpdate,
+            ActionUrl = Url.Action("Index", "Notifications")
         });
         await _context.SaveChangesAsync();
 

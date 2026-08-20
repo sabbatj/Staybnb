@@ -96,7 +96,8 @@ public class MessagesController : Controller
             UserId = model.ReceiverId,
             Title = "New Message",
             Message = "You have a new message.",
-            Type = NotificationType.NewMessage
+            Type = NotificationType.NewMessage,
+            ActionUrl = Url.Action("Inbox", "Messages")
         });
 
         await _context.SaveChangesAsync();

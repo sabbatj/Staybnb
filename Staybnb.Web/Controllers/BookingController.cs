@@ -114,7 +114,8 @@ public class BookingController : Controller
             UserId = property.HostId,
             Title = "New Booking Request",
             Message = $"You have a new booking request for '{property.Title}'.",
-            Type = NotificationType.BookingUpdate
+            Type = NotificationType.BookingUpdate,
+            ActionUrl = Url.Action("BookingRequests", "Host")
         });
         await _context.SaveChangesAsync();
 

@@ -313,7 +313,8 @@ public class UserRoleService : IUserRoleService
                 Message =
                     "Your Host status has been removed by an administrator. " +
                     "Your properties are no longer active.",
-                Type = NotificationType.HostApplicationUpdate
+                Type = NotificationType.HostApplicationUpdate,
+                ActionUrl = "/Notifications"
             });
 
             await _context.SaveChangesAsync();

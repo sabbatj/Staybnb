@@ -262,7 +262,8 @@ public class HostController : Controller
                 UserId = booking.GuestId,
                 Title = $"Booking {newStatus}",
                 Message = $"Your booking for '{booking.Property?.Title}' is now {newStatus}.",
-                Type = NotificationType.BookingUpdate
+                Type = NotificationType.BookingUpdate,
+                ActionUrl = Url.Action("MyBookings", "Booking")
             });
             await _context.SaveChangesAsync();
 
