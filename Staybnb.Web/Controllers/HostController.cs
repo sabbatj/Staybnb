@@ -105,6 +105,18 @@ public class HostController : Controller
         {
             ModelState.AddModelError(nameof(model.Images), "At least one property image is required.");
         }
+        else
+        {
+            foreach (var file in model.Images.Where(f => f != null && f.Length > 0))
+            {
+                if (!FileUploadValidationService.IsValidImage(file))
+                {
+                    ModelState.AddModelError(
+                        nameof(model.Images),
+                        "Each property image must be a JPG, JPEG, PNG, or WEBP file no larger than 5 MB.");
+                }
+            }
+        }
 
         if (!ModelState.IsValid) return View(model);
 
