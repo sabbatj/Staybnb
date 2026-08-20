@@ -57,33 +57,68 @@ public class BookingController : Controller
             return Challenge();
         }
 
-        var property = await _context.HostProperties.FirstOrDefaultAsync(p => p.Id == model.PropertyId && p.IsActive);
-        if (property == null) return NotFound();
+        var property = await _context.HostProperties
+            .FirstOrDefaultAsync(p => p.Id == model.PropertyId && p.IsActive);
 
-        var conflictingBooking = await _context.Bookings
-            .AnyAsync(b =>
-                b.PropertyId == model.PropertyId &&
-                b.Status != BookingStatus.Rejected &&
-                b.Status != BookingStatus.Cancelled &&
-                model.CheckInDate < b.CheckOutDate &&
-                model.CheckOutDate > b.CheckInDate);
+        if (property == null)
+            return NotFound();
 
-        if (conflictingBooking)
+        // A guest must not be able to book their own property.
+        if (property.HostId == currentUser.Id)
         {
-            ModelState.AddModelError(string.Empty,
-                "This property is already booked for some or all of those dates.");
+            TempData["Error"] = "You cannot book your own property.";
+            return RedirectToAction("Details", "Properties", new { id = property.Id });
         }
 
-        var nights = (model.CheckOutDate - model.CheckInDate).Days;
+        // Server-side date validation.
+        var today = DateTime.Today;
 
-        if (nights <= 0)
+        if (model.CheckInDate.Date < today)
         {
-            ModelState.AddModelError(string.Empty, "Check-out date must be after check-in date.");
+            ModelState.AddModelError(
+                nameof(model.CheckInDate),
+                "Check-in date cannot be in the past.");
+        }
+
+        if (model.CheckOutDate.Date <= model.CheckInDate.Date)
+        {
+            ModelState.AddModelError(
+                nameof(model.CheckOutDate),
+                "Check-out date must be after check-in date.");
+        }
+
+        // Server-side guest validation.
+        if (model.NumberOfGuests < 1)
+        {
+            ModelState.AddModelError(
+                nameof(model.NumberOfGuests),
+                "At least one guest is required.");
         }
 
         if (model.NumberOfGuests > property.MaxGuests)
         {
-            ModelState.AddModelError(nameof(model.NumberOfGuests), $"This property allows a maximum of {property.MaxGuests} guests.");
+            ModelState.AddModelError(
+                nameof(model.NumberOfGuests),
+                $"This property allows a maximum of {property.MaxGuests} guests.");
+        }
+
+        // Only check date conflicts when the requested dates are valid.
+        if (model.CheckOutDate.Date > model.CheckInDate.Date)
+        {
+            var conflictingBooking = await _context.Bookings
+                .AnyAsync(b =>
+                    b.PropertyId == model.PropertyId &&
+                    b.Status != BookingStatus.Rejected &&
+                    b.Status != BookingStatus.Cancelled &&
+                    model.CheckInDate.Date < b.CheckOutDate.Date &&
+                    model.CheckOutDate.Date > b.CheckInDate.Date);
+
+            if (conflictingBooking)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "This property is already booked for some or all of those dates.");
+            }
         }
 
         if (!ModelState.IsValid)
@@ -92,14 +127,20 @@ public class BookingController : Controller
             return View(model);
         }
 
-        var totalPrice = PricingCalculator.CalculateTotalPrice(property.PricePerNight, nights, property.CleaningFee, property.ServiceFee);
+        var nights = (model.CheckOutDate.Date - model.CheckInDate.Date).Days;
+
+        var totalPrice = PricingCalculator.CalculateTotalPrice(
+            property.PricePerNight,
+            nights,
+            property.CleaningFee,
+            property.ServiceFee);
 
         var booking = new Booking
         {
             PropertyId = property.Id,
             GuestId = currentUser.Id,
-            CheckInDate = model.CheckInDate,
-            CheckOutDate = model.CheckOutDate,
+            CheckInDate = model.CheckInDate.Date,
+            CheckOutDate = model.CheckOutDate.Date,
             NumberOfGuests = model.NumberOfGuests,
             TotalPrice = totalPrice,
             Status = BookingStatus.Pending,
@@ -117,9 +158,13 @@ public class BookingController : Controller
             Type = NotificationType.BookingUpdate,
             ActionUrl = Url.Action("BookingRequests", "Host")
         });
+
         await _context.SaveChangesAsync();
 
-        await _activityLog.LogAsync(currentUser.Id, $"Requested booking for '{property.Title}'", ActivityType.BookingStatusUpdate);
+        await _activityLog.LogAsync(
+            currentUser.Id,
+            $"Requested booking for '{property.Title}'",
+            ActivityType.BookingStatusUpdate);
 
         return RedirectToAction(nameof(MyBookings));
     }
@@ -316,8 +361,22 @@ public class BookingController : Controller
 
         if (booking == null) return NotFound();
 
+        if (booking.Status != BookingStatus.CheckedIn &&
+            booking.Status != BookingStatus.Completed)
+        {
+            TempData["Error"] = "You can only leave a review after checking in.";
+            return RedirectToAction(nameof(MyBookings));
+        }
+
+        // Never trust PropertyId supplied by the client.
+        // The property must come from the authenticated user's booking.
+        if (model.PropertyId != booking.PropertyId)
+        {
+            return BadRequest();
+        }
+
         var alreadyReviewed = await _context.Reviews
-            .AnyAsync(r => r.PropertyId == model.PropertyId && r.ReviewerId == CurrentUserId);
+            .AnyAsync(r => r.PropertyId == booking.PropertyId && r.ReviewerId == CurrentUserId);
 
         if (alreadyReviewed)
         {
@@ -327,7 +386,7 @@ public class BookingController : Controller
 
         _context.Reviews.Add(new Review
         {
-            PropertyId = model.PropertyId,
+            PropertyId = booking.PropertyId,
             ReviewerId = CurrentUserId!,
             Rating = model.Rating,
             Comment = model.Comment,
