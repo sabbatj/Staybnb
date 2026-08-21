@@ -1,4 +1,3 @@
-
 STAYBNB
 =======
 
@@ -528,12 +527,16 @@ The tests cover areas including:
 
 The current test suite contains:
 
-24 TOTAL TESTS
-24 PASSED
+40 TOTAL TESTS
+40 PASSED
 0 FAILED
 0 SKIPPED
 
 The application and test projects can be built and tested using the .NET CLI.
+
+To run all automated tests from the project root:
+
+   dotnet test
 
 
 TECHNOLOGY STACK
@@ -563,24 +566,162 @@ Testing:
 GETTING STARTED
 ===============
 
-1. Restore the project dependencies:
+Staybnb is designed to run across macOS, Linux, and Windows.
 
-   dotnet restore
+REQUIREMENTS
+------------
+
+- .NET 10 SDK
+- Docker Desktop
+- Git
 
 
-2. Build the application:
+MACOS / LINUX
+-------------
 
-   dotnet build
+1. Navigate to the Staybnb project root:
+
+   cd Staybnb
 
 
-3. Run the application:
+2. Make the database setup script executable:
 
-   dotnet run
+   chmod +x scripts/setup-db.sh
+
+
+3. Run the database setup script:
+
+   ./scripts/setup-db.sh
+
+The setup script automatically:
+
+- Checks that Docker is available
+- Starts the SQL Server Docker container
+- Waits for SQL Server to become available
+- Checks whether StaybnbDb exists
+- Creates the database when required
+- Restores the required .NET tools
+- Applies Entity Framework Core migrations
+
+
+4. Start the Staybnb application:
+
+   dotnet run --project Staybnb.Web
+
+
+5. Run the automated tests:
+
+   dotnet test
+
+
+WINDOWS
+-------
+
+1. Open PowerShell from the Staybnb project root.
+
+
+2. Run the Windows database setup script:
+
+   .\scripts\setup-db.ps1
+
+The setup script automatically:
+
+- Checks that Docker is available
+- Starts the SQL Server Docker container
+- Waits for SQL Server to become available
+- Checks whether StaybnbDb exists
+- Creates the database when required
+- Restores the required .NET tools
+- Applies Entity Framework Core migrations
+
+
+3. Start the Staybnb application:
+
+   dotnet run --project Staybnb.Web
 
 
 4. Run the automated tests:
 
-   dotnet test Staybnb.Web.Tests/Staybnb.Web.Tests.csproj
+   dotnet test
+
+
+MANUAL .NET COMMANDS
+--------------------
+
+The following commands can also be used from the Staybnb project root.
+
+Restore project dependencies:
+
+   dotnet restore
+
+Build the solution:
+
+   dotnet build
+
+Run the application:
+
+   dotnet run --project Staybnb.Web
+
+Run all automated tests:
+
+   dotnet test
+
+
+DATABASE SETUP
+=============
+
+Staybnb uses SQL Server running in Docker for the application's database.
+
+The database setup scripts are located in:
+
+   scripts/setup-db.sh
+   scripts/setup-db.ps1
+
+The scripts provide cross-platform database setup for macOS/Linux and
+Windows.
+
+Entity Framework Core migrations are automatically applied during database
+setup.
+
+The database is named:
+
+   StaybnbDb
+
+The SQL Server Docker container is managed through:
+
+   docker-compose.yml
+
+The database setup process is designed so that a new developer or evaluator
+can clone the repository, start Docker Desktop, run the appropriate
+platform-specific setup script, and apply the database migrations without
+manually installing SQL Server.
+
+
+CROSS-PLATFORM VERIFICATION
+===========================
+
+The database setup and application workflow has been tested using the
+cross-platform scripts.
+
+macOS/Linux:
+
+   ./scripts/setup-db.sh
+
+Windows:
+
+   .\scripts\setup-db.ps1
+
+The .NET solution can then be built and tested using:
+
+   dotnet build
+   dotnet test
+
+The automated test suite currently reports:
+
+   40 TOTAL TESTS
+   40 PASSED
+   0 FAILED
+   0 SKIPPED
 
 
 PROJECT GOAL
