@@ -1,0 +1,58 @@
+name: Windows Compatibility Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  windows-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Check Windows environment
+        shell: pwsh
+        run: |
+          Write-Host "Windows environment:"
+          Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion
+          Write-Host ".NET version:"
+          dotnet --version
+          Write-Host "Docker version:"
+          docker --version
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build application
+        run: dotnet build --no-restore
+
+      - name: Run Windows database setup
+        shell: pwsh
+        run: .\scripts\setup-db.ps1
+
+      - name: Check Docker containers
+        run: docker compose ps
+
+      - name: Run automated tests
+        run: dotnet test --no-restore
+
+      - name: Show Docker status
+        if: always()
+        run: docker compose ps
+
+      - name: Show SQL Server logs if tests fail
+        if: failure()
+        run: docker compose logs sqlserver
+
+      - name: Stop Docker containers
+        if: always()
+        run: docker compose down
