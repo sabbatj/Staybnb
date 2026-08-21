@@ -20,7 +20,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore tools
-        run: dotnet tool restore --tool-manifest Staybnb.Web/dotnet-tools.json
+        run: dotnet tool restore --tool-manifest Staybnb.Web/.config/dotnet-tools.json
 
       - name: Restore
         run: dotnet restore Staybnb.Web/Staybnb.Web.csproj
