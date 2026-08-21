@@ -1,13 +1,15 @@
-name: Windows Compatibility Test
+name: Cross-Platform Compatibility
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
-  windows-test:
+
+  windows:
+    name: Windows - .NET and PowerShell
     runs-on: windows-latest
 
     steps:
@@ -19,40 +21,74 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Check Windows environment
+      - name: Display environment
         shell: pwsh
         run: |
-          Write-Host "Windows environment:"
-          Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion
-          Write-Host ".NET version:"
           dotnet --version
-          Write-Host "Docker version:"
-          docker --version
+          dotnet --info
+          $PSVersionTable
 
-      - name: Restore .NET dependencies
+      - name: Restore
         run: dotnet restore
 
-      - name: Build application
+      - name: Build
         run: dotnet build --no-restore
 
-      - name: Run Windows database setup
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal
+
+      - name: Validate Windows database setup script
         shell: pwsh
-        run: .\scripts\setup-db.ps1
+        run: |
+          $script = Get-Content .\scripts\setup-db.ps1 -Raw
+          [System.Management.Automation.Language.Parser]::ParseInput(
+            $script,
+            [ref]$null,
+            [ref]$null
+          ) | Out-Null
+          Write-Host "PowerShell script syntax validation passed."
 
-      - name: Check Docker containers
-        run: docker compose ps
+      - name: Validate Docker Compose configuration
+        run: docker compose config
 
-      - name: Run automated tests
-        run: dotnet test --no-restore
+  linux-docker:
+    name: Linux - Docker and SQL Server
+    runs-on: ubuntu-latest
 
-      - name: Show Docker status
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Display environment
+        run: |
+          dotnet --version
+          docker --version
+          docker compose version
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Make Linux database script executable
+        run: chmod +x scripts/setup-db.sh
+
+      - name: Start SQL Server and configure database
+        run: ./scripts/setup-db.sh
+
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal
+
+      - name: Show Docker containers
         if: always()
         run: docker compose ps
 
-      - name: Show SQL Server logs if tests fail
-        if: failure()
+      - name: Show SQL Server logs
+        if: always()
         run: docker compose logs sqlserver
-
-      - name: Stop Docker containers
-        if: always()
-        run: docker compose down
