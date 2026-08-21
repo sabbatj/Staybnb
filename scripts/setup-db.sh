@@ -2,8 +2,10 @@
 
 set -e
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
 PASSWORD="${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}"
-SERVER="${MSSQL_SERVER:-localhost,1433}"
 
 echo "======================================"
 echo " Staybnb database setup"
@@ -11,24 +13,23 @@ echo "======================================"
 echo ""
 
 echo "Checking Docker..."
+
 if ! command -v docker >/dev/null 2>&1; then
     echo "ERROR: Docker is not installed or not available."
     exit 1
 fi
 
-echo "Checking sqlcmd..."
-if ! command -v sqlcmd >/dev/null 2>&1; then
-    echo "ERROR: sqlcmd is required."
-    echo "Install SQL Server command-line tools, then run this script again."
-    exit 1
-fi
+echo "Starting SQL Server..."
+
+docker compose up -d sqlserver
 
 echo ""
-echo "Checking SQL Server at ${SERVER}..."
+echo "Waiting for SQL Server to become available..."
 
 for i in {1..60}; do
-    if sqlcmd \
-        -S "$SERVER" \
+    if docker exec staybnb-sqlserver \
+        /opt/mssql-tools18/bin/sqlcmd \
+        -S localhost \
         -U sa \
         -P "$PASSWORD" \
         -C \
@@ -39,10 +40,10 @@ for i in {1..60}; do
     fi
 
     if [ "$i" -eq 60 ]; then
-        echo "ERROR: SQL Server was not available."
+        echo "ERROR: SQL Server did not become ready in time."
         echo ""
-        echo "Make sure Docker Desktop is running and SQL Server"
-        echo "is available on localhost:1433."
+        echo "Docker container logs:"
+        docker logs staybnb-sqlserver
         exit 1
     fi
 
@@ -52,33 +53,42 @@ done
 echo ""
 echo "Checking StaybnbDb..."
 
-if ! sqlcmd \
-    -S "$SERVER" \
+if docker exec staybnb-sqlserver \
+    /opt/mssql-tools18/bin/sqlcmd \
+    -S localhost \
     -U sa \
     -P "$PASSWORD" \
     -C \
     -Q "IF DB_ID('StaybnbDb') IS NULL THROW 50000, 'StaybnbDb does not exist.', 1;" \
     >/dev/null 2>&1; then
 
+    echo "StaybnbDb found."
+
+else
+
     echo "StaybnbDb does not exist yet."
     echo "EF Core migrations will create it."
-else
-    echo "StaybnbDb found."
+
 fi
 
 echo ""
 echo "Restoring .NET tools..."
-dotnet tool restore
+
+dotnet tool restore --tool-manifest "$ROOT_DIR/Staybnb.Web/dotnet-tools.json"
 
 echo ""
 echo "Applying EF Core migrations..."
-dotnet ef database update
+
+dotnet ef database update \
+    --project "$ROOT_DIR/Staybnb.Web/Staybnb.Web.csproj" \
+    --startup-project "$ROOT_DIR/Staybnb.Web/Staybnb.Web.csproj"
 
 echo ""
 echo "======================================"
 echo " Database setup complete"
 echo "======================================"
 echo ""
+
 echo "Start Staybnb with:"
-echo "  dotnet run"
+echo "  dotnet run --project Staybnb.Web"
 echo ""
