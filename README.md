@@ -63,7 +63,8 @@ The application includes:
 - Address
 - Property image
 
-At least one PropertyImage is required before an application can be submitted.
+At least one PropertyImage is required before an application can be
+submitted.
 
 Once the application is reviewed and approved by an Admin, the user becomes
 a Host and receives access to the Host dashboard.
@@ -193,7 +194,8 @@ activities within the platform.
 USER LIFECYCLE
 =============
 
-Staybnb supports a complete user lifecycle from registration through hosting.
+Staybnb supports a complete user lifecycle from registration through
+hosting.
 
 1. REGISTRATION
 
@@ -258,7 +260,8 @@ BOOKING WORKFLOW
 
 3. AVAILABILITY CHECK
 
-   The system verifies that the property is available for the requested dates.
+   The system verifies that the property is available for the requested
+   dates.
 
 
 4. PRICE CALCULATION
@@ -293,14 +296,14 @@ BOOKING WORKFLOW
 
 8. GUEST CHECK-IN
 
-   The Guest completes the required check-in steps and submits the documents
-   requested for the property.
+   The Guest completes the required check-in steps and submits the
+   documents requested for the property.
 
 
 9. DOCUMENT VERIFICATION
 
-   The Host reviews the submitted Guest Documents, such as an ID or Passport,
-   and verifies the Guest's check-in information.
+   The Host reviews the submitted Guest Documents, such as an ID or
+   Passport, and verifies the Guest's check-in information.
 
 
 HOST WORKFLOW
@@ -525,12 +528,12 @@ The tests cover areas including:
 - Communication
 - Activity logging
 
-The current test suite contains:
+Current automated test results:
 
-40 TOTAL TESTS
-40 PASSED
-0 FAILED
-0 SKIPPED
+   40 TOTAL TESTS
+   40 PASSED
+   0 FAILED
+   0 SKIPPED
 
 The application and test projects can be built and tested using the .NET CLI.
 
@@ -562,11 +565,19 @@ Testing:
 - Microsoft.NET.Test.Sdk
 - Entity Framework Core InMemory
 
+Infrastructure:
+
+- Docker
+- Docker Compose
+- SQL Server
+
 
 GETTING STARTED
 ===============
 
-Staybnb is designed to run across macOS, Linux, and Windows.
+Staybnb is designed to run across macOS, Linux, and Windows using
+Docker for SQL Server and the .NET 10 SDK.
+
 
 REQUIREMENTS
 ------------
@@ -654,6 +665,10 @@ Restore project dependencies:
 
    dotnet restore
 
+Restore repository .NET tools:
+
+   dotnet tool restore
+
 Build the solution:
 
    dotnet build
@@ -672,7 +687,7 @@ DATABASE SETUP
 
 Staybnb uses SQL Server running in Docker for the application's database.
 
-The database setup scripts are located in:
+The database setup scripts are:
 
    scripts/setup-db.sh
    scripts/setup-db.ps1
@@ -691,6 +706,14 @@ The SQL Server Docker container is managed through:
 
    docker-compose.yml
 
+The required Entity Framework Core CLI tooling is managed through the
+repository's local .NET tool manifest:
+
+   .config/dotnet-tools.json
+
+The EF Core tool version is pinned in the repository to ensure consistent
+tooling across development environments and CI.
+
 The database setup process is designed so that a new developer or evaluator
 can clone the repository, start Docker Desktop, run the appropriate
 platform-specific setup script, and apply the database migrations without
@@ -698,12 +721,17 @@ manually installing SQL Server.
 
 
 CROSS-PLATFORM VERIFICATION
-===========================
+============================
 
-The database setup and application workflow has been tested using the
-cross-platform scripts.
+Staybnb is designed to run across:
 
-macOS/Linux:
+- macOS
+- Linux
+- Windows
+
+Database setup is provided through platform-specific scripts:
+
+macOS / Linux:
 
    ./scripts/setup-db.sh
 
@@ -711,17 +739,96 @@ Windows:
 
    .\scripts\setup-db.ps1
 
-The .NET solution can then be built and tested using:
+Both scripts:
+
+- Check that Docker is available
+- Start the SQL Server Docker container
+- Wait for SQL Server to become available
+- Verify the StaybnbDb database
+- Restore the required .NET tools
+- Apply Entity Framework Core migrations
+
+The Entity Framework Core CLI is managed through the repository's local
+.NET tool manifest.
+
+The local tool manifest ensures that the required EF Core tooling is
+restored consistently instead of depending on a globally installed
+dotnet-ef command.
+
+The application can then be built and tested using:
 
    dotnet build
    dotnet test
 
-The automated test suite currently reports:
+Automated cross-platform CI is configured through GitHub Actions.
+
+The CI workflow validates:
+
+- Windows .NET environment
+- Windows PowerShell configuration
+- Linux .NET environment
+- Docker availability
+- Docker Compose configuration
+- SQL Server startup
+- Database setup
+- Entity Framework Core migrations
+- Automated tests
+
+The Linux Docker and SQL Server CI workflow has successfully completed,
+confirming that the Docker database setup, .NET tool restoration,
+Entity Framework Core migrations, and application test workflow operate
+successfully in the CI environment.
+
+The Windows workflow also validates the Windows-specific .NET and
+PowerShell configuration.
+
+Current automated test results:
 
    40 TOTAL TESTS
    40 PASSED
    0 FAILED
    0 SKIPPED
+
+This confirms that Staybnb has been configured as a cross-platform
+ASP.NET Core application with platform-specific database setup for
+macOS/Linux and Windows.
+
+
+CI/CD
+=====
+
+Staybnb uses GitHub Actions for automated compatibility and build
+verification.
+
+The workflow is located under:
+
+   .github/workflows/windows.yml
+
+The workflow performs separate validation for Windows and Linux.
+
+Windows validation includes:
+
+- .NET 10 setup
+- .NET restore
+- Application build
+- Automated tests
+- PowerShell script validation
+- Docker Compose validation
+
+Linux validation includes:
+
+- .NET 10 setup
+- Docker validation
+- Docker Compose validation
+- .NET restore
+- Application build
+- SQL Server Docker startup
+- Database configuration
+- Entity Framework Core migration execution
+- Automated tests
+
+This provides automated verification that the repository can be built,
+tested, and configured across different operating environments.
 
 
 PROJECT GOAL
@@ -745,6 +852,9 @@ The platform brings together:
 - Notifications
 - Activity logging
 - Role-based security
+- Docker-based SQL Server infrastructure
+- Cross-platform database setup
+- Automated CI verification
 
 The result is a complete ASP.NET Core MVC property-rental platform designed
 around the interaction between Guests, Hosts, and platform administrators.
