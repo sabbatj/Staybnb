@@ -79,7 +79,7 @@ dotnet tool restore --tool-manifest "$ROOT_DIR/Staybnb.Web/dotnet-tools.json"
 echo ""
 echo "Applying EF Core migrations..."
 
-dotnet ef database update \
+dotnet tool run dotnet-ef database update \
     --project "$ROOT_DIR/Staybnb.Web/Staybnb.Web.csproj" \
     --startup-project "$ROOT_DIR/Staybnb.Web/Staybnb.Web.csproj"
 
